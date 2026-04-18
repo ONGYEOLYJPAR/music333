@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,88 +11,120 @@ const server = http.createServer(app);
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
+const SPOTIFY_CLIENT_ID     = process.env.SPOTIFY_CLIENT_ID;
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+const REDIRECT_URI          = process.env.REDIRECT_URI || `http://localhost:${PORT}/spotify/callback`;
+
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/music', express.static('music'));
 
-// 진행자 페이지
-app.get('/host', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'host.html'));
+app.get('/host', (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
+
+// ─── Spotify OAuth ───
+let spotify = { accessToken: null, refreshToken: null, expiry: 0 };
+
+app.get('/spotify/login', (req, res) => {
+  const scopes = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+  const url = new URL('https://accounts.spotify.com/authorize');
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('client_id', SPOTIFY_CLIENT_ID);
+  url.searchParams.set('scope', scopes);
+  url.searchParams.set('redirect_uri', REDIRECT_URI);
+  res.redirect(url.toString());
 });
 
-// 파일 업로드 설정
+app.get('/spotify/callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error) return res.send(`Spotify 오류: ${error}`);
+
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
+    },
+    body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }),
+  });
+  const data = await resp.json();
+  if (data.error) return res.send(`토큰 오류: ${data.error_description}`);
+
+  spotify.accessToken  = data.access_token;
+  spotify.refreshToken = data.refresh_token;
+  spotify.expiry       = Date.now() + data.expires_in * 1000;
+  res.redirect('/host?spotify=ok');
+});
+
+async function refreshSpotifyToken() {
+  if (!spotify.refreshToken) return;
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
+    },
+    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: spotify.refreshToken }),
+  });
+  const data = await resp.json();
+  spotify.accessToken = data.access_token;
+  spotify.expiry      = Date.now() + data.expires_in * 1000;
+}
+
+app.get('/spotify/token', async (req, res) => {
+  if (!spotify.accessToken) return res.json({ token: null });
+  if (Date.now() > spotify.expiry - 60000) await refreshSpotifyToken();
+  res.json({ token: spotify.accessToken });
+});
+
+app.get('/spotify/search', async (req, res) => {
+  if (!spotify.accessToken) return res.status(401).json({ error: 'not_logged_in' });
+  if (Date.now() > spotify.expiry - 60000) await refreshSpotifyToken();
+  const q = req.query.q;
+  const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=5&market=KR`, {
+    headers: { Authorization: `Bearer ${spotify.accessToken}` },
+  });
+  const data = await resp.json();
+  res.json(data.tracks?.items || []);
+});
+
+// ─── 파일 업로드 ───
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'music/'),
   filename: (req, file, cb) => {
     const safe = Buffer.from(file.originalname, 'latin1').toString('utf8');
     cb(null, safe);
-  }
+  },
 });
 const upload = multer({ storage });
 
 const metaPath = path.join(__dirname, 'music', 'songs.json');
+function readSongs()    { return fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath, 'utf-8')) : []; }
+function writeSongs(s)  { fs.writeFileSync(metaPath, JSON.stringify(s, null, 2)); }
 
-function readSongs() {
-  if (!fs.existsSync(metaPath)) return [];
-  return JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-}
-
-function writeSongs(songs) {
-  fs.writeFileSync(metaPath, JSON.stringify(songs, null, 2));
-}
-
-app.get('/api/songs', (req, res) => res.json(readSongs()));
-
-app.post('/api/songs', (req, res) => {
-  const songs = readSongs();
-  songs.push(req.body);
-  writeSongs(songs);
-  res.json({ ok: true });
-});
-
-app.put('/api/songs/:index', (req, res) => {
-  const songs = readSongs();
-  songs[req.params.index] = req.body;
-  writeSongs(songs);
-  res.json({ ok: true });
-});
-
-app.delete('/api/songs/:index', (req, res) => {
-  const songs = readSongs();
-  songs.splice(Number(req.params.index), 1);
-  writeSongs(songs);
-  res.json({ ok: true });
-});
-
+app.get('/api/songs',         (req, res) => res.json(readSongs()));
+app.post('/api/songs',        (req, res) => { const s = readSongs(); s.push(req.body); writeSongs(s); res.json({ ok: true }); });
+app.put('/api/songs/:index',  (req, res) => { const s = readSongs(); s[req.params.index] = req.body; writeSongs(s); res.json({ ok: true }); });
+app.delete('/api/songs/:index', (req, res) => { const s = readSongs(); s.splice(Number(req.params.index), 1); writeSongs(s); res.json({ ok: true }); });
 app.post('/api/upload', upload.single('mp3'), (req, res) => {
-  const name = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-  res.json({ filename: name });
+  res.json({ filename: Buffer.from(req.file.originalname, 'latin1').toString('utf8') });
 });
 
-// ─── Socket.io 실시간 동기화 ───
-// 현재 게임 상태 (서버가 기억)
-let gameState = {
-  songIndex: 0,
-  isPlaying: false,
-  currentTime: 0,
-  revealStep: 0,   // 0=숨김 1=힌트 2=아티스트 3=전체공개
-  mode: 'ai',      // 'ai' | 'original'
-  timerSeconds: 0,
-  timerRunning: false
-};
+// ─── Socket.io ───
+let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0, mode: 'ai', timerSeconds: 0, timerRunning: false };
 
 io.on('connection', (socket) => {
-  // 새 참가자에게 현재 상태 전송
   socket.emit('state:sync', gameState);
-
-  // 진행자 → 서버 → 모든 참가자
-  socket.on('host:load',    (data) => { gameState = { ...gameState, ...data, revealStep: 0 }; io.emit('player:load', data); });
-  socket.on('host:play',    (data) => { gameState.isPlaying = true; gameState.currentTime = data.currentTime; io.emit('player:play', data); });
-  socket.on('host:pause',   (data) => { gameState.isPlaying = false; gameState.currentTime = data.currentTime; io.emit('player:pause', data); });
-  socket.on('host:seek',    (data) => { gameState.currentTime = data.time; io.emit('player:seek', data); });
-  socket.on('host:reveal',  (data) => { gameState.revealStep = data.step; io.emit('player:reveal', data); });
-  socket.on('host:mode',    (data) => { gameState.mode = data.mode; io.emit('player:mode', data); });
-  socket.on('host:timer',   (data) => { Object.assign(gameState, data); io.emit('player:timer', data); });
+  socket.on('host:load',   (d) => { gameState = { ...gameState, ...d, revealStep: 0 }; io.emit('player:load',  d); });
+  socket.on('host:play',   (d) => { gameState.isPlaying = true;  gameState.currentTime = d.currentTime; io.emit('player:play',   d); });
+  socket.on('host:pause',  (d) => { gameState.isPlaying = false; gameState.currentTime = d.currentTime; io.emit('player:pause',  d); });
+  socket.on('host:seek',   (d) => { gameState.currentTime = d.time; io.emit('player:seek',  d); });
+  socket.on('host:reveal', (d) => { gameState.revealStep = d.step; io.emit('player:reveal', d); });
+  socket.on('host:mode',   (d) => { gameState.mode = d.mode; io.emit('player:mode', d); });
+  socket.on('host:timer',  (d) => { Object.assign(gameState, d); io.emit('player:timer', d); });
 });
 
-server.listen(PORT, () => console.log(`서버 실행: http://localhost:${PORT}  진행자: http://localhost:${PORT}/host`));
+server.listen(PORT, () => {
+  console.log(`서버: http://localhost:${PORT}`);
+  console.log(`진행자: http://localhost:${PORT}/host`);
+  console.log(`Spotify 로그인: http://localhost:${PORT}/spotify/login`);
+});

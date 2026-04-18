@@ -40,10 +40,25 @@
       <audio id="audio-ai" preload="auto"></audio>
       <audio id="audio-orig" preload="auto"></audio>
 
+      <!-- Spotify 로그인 상태 -->
+      <div class="spotify-bar" id="spotify-bar">
+        <div id="spotify-status">
+          <span class="sp-dot disconnected"></span>
+          <span id="sp-label">Spotify 연결 안됨</span>
+        </div>
+        <button class="sp-login-btn" id="sp-login-btn" onclick="spotifyLogin()">🎧 Spotify 로그인</button>
+      </div>
+
+      <!-- Spotify 검색 결과 -->
+      <div class="spotify-search hidden" id="spotify-search">
+        <div class="section-label">🔍 원곡 검색 결과</div>
+        <ul id="search-results" class="search-results"></ul>
+      </div>
+
       <!-- AI ↔ 원곡 토글 -->
       <div class="mode-toggle">
         <button class="mode-btn active" id="btn-mode-ai" onclick="setMode('ai')">🤖 AI 버전</button>
-        <button class="mode-btn" id="btn-mode-orig" onclick="setMode('original')">🎵 원곡</button>
+        <button class="mode-btn" id="btn-mode-orig" onclick="setMode('original')">🎵 원곡 (Spotify)</button>
       </div>
 
       <!-- 진행 바 -->
@@ -101,8 +116,8 @@
         <div class="form-title">+ 새 곡 추가</div>
         <label>AI 버전 MP3</label>
         <input type="file" id="upload-file" accept=".mp3"/>
-        <label>원곡 MP3 (선택)</label>
-        <input type="file" id="upload-orig" accept=".mp3"/>
+        <label>Spotify 원곡 검색어 (예: Dynamite BTS)</label>
+        <input type="text" id="input-spotify-query" placeholder="비워두면 제목+아티스트로 자동 검색"/>
         <label>곡 제목</label>
         <input type="text" id="input-title" placeholder="예) 봄날"/>
         <label>아티스트</label>
@@ -122,6 +137,7 @@
     </div>
   </div>
 
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="host.js"></script>
 </body>
