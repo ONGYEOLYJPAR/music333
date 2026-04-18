@@ -148,7 +148,7 @@ function loadYoutube() {
   if (!id) return alert('올바른 YouTube URL을 입력해주세요!');
 
   const iframe = document.getElementById('yt-iframe');
-  iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+  iframe.src = `https://www.youtube.com/embed/${id}`;
 
   document.getElementById('yt-embed-wrap').classList.remove('hidden');
   document.getElementById('yt-placeholder').classList.add('hidden');
