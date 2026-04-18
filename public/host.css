@@ -264,6 +264,75 @@
   margin-bottom: 0.5rem;
 }
 
+/* ─── 실시간 힌트 ─── */
+.live-hint-section {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(124,58,237,0.3);
+}
+
+.live-hint-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.live-hint-row input { flex: 1; }
+
+.hint-send-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: opacity 0.2s;
+}
+.hint-send-btn:hover { opacity: 0.85; }
+
+.hint-clear-btn {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+}
+.hint-clear-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+/* ─── YouTube 저장 버튼 ─── */
+.yt-save-btn {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.yt-save-btn:hover { background: rgba(251,191,36,0.2); }
+
+/* ─── 일괄 업로드 가이드 ─── */
+.bulk-guide {
+  background: rgba(124,58,237,0.1);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.guide-step {
+  font-size: 0.85rem;
+  color: var(--accent2);
+}
+
 /* ─── 타이머 ─── */
 .timer-section {
   background: var(--card);

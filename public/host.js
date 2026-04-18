@@ -54,6 +54,16 @@ function loadSong(index, autoPlay = false) {
   isOrigPlaying = false;
   if (btnPlayOrig) btnPlayOrig.textContent = '▶';
 
+  // 저장된 YouTube URL 자동 로드
+  const ytInput = document.getElementById('yt-url-input');
+  if (s.youtubeUrl) {
+    ytInput.value = s.youtubeUrl;
+    loadYoutube();
+  } else {
+    ytInput.value = '';
+    clearYoutube();
+  }
+
   updatePlaylistHighlight();
   setReveal(0);
   socket.emit('host:load', { songIndex: index });
@@ -211,6 +221,34 @@ function updateTimerDisplay() {
   const el = document.getElementById('timer-display');
   el.textContent = timerLeft;
   el.classList.toggle('urgent', timerLeft <= 10 && timerLeft > 0);
+}
+
+// ─── 실시간 힌트 전송 ───
+function sendLiveHint() {
+  const text = document.getElementById('live-hint-input').value.trim();
+  if (!text) return;
+  socket.emit('host:hint', { text });
+}
+
+function clearLiveHint() {
+  document.getElementById('live-hint-input').value = '';
+  socket.emit('host:hint', { text: '' });
+}
+
+// ─── YouTube URL 저장 ───
+async function saveYoutubeUrl() {
+  const url = document.getElementById('yt-url-input').value.trim();
+  if (!url) return alert('YouTube URL을 먼저 입력해주세요!');
+  if (!extractYoutubeId(url)) return alert('올바른 YouTube URL이 아니에요!');
+
+  const song = { ...songs[currentIndex], youtubeUrl: url };
+  await fetch(`/api/songs/${currentIndex}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(song)
+  });
+  songs[currentIndex] = song;
+  alert('✅ YouTube URL 저장됨!');
 }
 
 // ─── 정답 공개 ───

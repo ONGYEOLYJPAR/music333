@@ -32,6 +32,7 @@ socket.on('player:seek',  (d) => { audio.currentTime = d.time; });
 socket.on('player:reveal', applyReveal);
 socket.on('player:mode',   applyMode);
 socket.on('player:timer',  applyTimer);
+socket.on('player:hint',   applyLiveHint);
 
 function applyLoad(d) {
   const s = songs[d.songIndex];
@@ -116,6 +117,18 @@ function applyTimer(d) {
   timerEl.classList.remove('hidden');
   timerNum.textContent = d.timerSeconds;
   timerEl.classList.toggle('urgent', d.timerSeconds <= 10);
+}
+
+// ─── 실시간 힌트 ───
+function applyLiveHint(d) {
+  const banner = document.getElementById('live-hint-banner');
+  const text   = document.getElementById('live-hint-text');
+  if (!d.text) {
+    banner.classList.add('hidden');
+    return;
+  }
+  text.textContent = d.text;
+  banner.classList.remove('hidden');
 }
 
 // ─── 진행 바 ───
