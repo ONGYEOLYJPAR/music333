@@ -32,7 +32,7 @@ async function searchSpotify() {
     tracks.forEach(t => {
       const li = document.createElement('li');
       li.className = 'search-result-item';
-      const safeId   = t.id;
+      const safePrev = (t.previewUrl || '').replace(/'/g, "\\'");
       const safeName = t.name.replace(/'/g, "\\'");
       li.innerHTML = `
         <img src="${t.albumArt}" width="42" height="42" style="border-radius:5px;flex-shrink:0"/>
@@ -40,25 +40,49 @@ async function searchSpotify() {
           <div class="sr-title">${t.name}</div>
           <div class="sr-artist">${t.artist}</div>
         </div>
-        <button class="sr-select" onclick="loadSpotifyEmbed('${safeId}','${safeName}')">▶ 재생</button>`;
+        ${t.previewUrl
+          ? `<button class="sr-select" onclick="loadOrigTrack('${safePrev}','${safeName}')">▶ 선택</button>`
+          : `<span style="color:var(--muted);font-size:0.75rem">미리듣기 없음</span>`
+        }`;
       ul.appendChild(li);
     });
   }
   box.classList.remove('hidden');
 }
 
-function loadSpotifyEmbed(trackId, trackName) {
-  const iframe = document.getElementById('spotify-iframe');
-  iframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
-  document.getElementById('spotify-embed').classList.remove('hidden');
+let origAudio = new Audio();
+
+function loadOrigTrack(previewUrl, trackName) {
+  origAudio.pause();
+  origAudio.src = previewUrl;
+  origAudio.load();
+
+  const embed = document.getElementById('spotify-embed');
+  const nameEl = document.getElementById('orig-track-name');
+  const playBtn = document.getElementById('orig-play-btn');
+  nameEl.textContent = trackName;
+  playBtn.textContent = '▶ 재생';
+  embed.classList.remove('hidden');
   document.getElementById('spotify-search').classList.add('hidden');
   document.getElementById('btn-mode-orig').textContent = `🎵 ${trackName}`;
   socket.emit('host:mode', { mode: 'original' });
+
+  origAudio.onended = () => { playBtn.textContent = '▶ 재생'; };
+}
+
+function toggleOrigPlay() {
+  const btn = document.getElementById('orig-play-btn');
+  if (origAudio.paused) {
+    origAudio.play();
+    btn.textContent = '⏸ 정지';
+  } else {
+    origAudio.pause();
+    btn.textContent = '▶ 재생';
+  }
 }
 
 function closeSpotify() {
-  const iframe = document.getElementById('spotify-iframe');
-  iframe.src = '';
+  origAudio.pause();
   document.getElementById('spotify-embed').classList.add('hidden');
   setMode('ai');
 }

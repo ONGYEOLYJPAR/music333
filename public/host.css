@@ -102,15 +102,19 @@
 }
 .sp-search-btn:hover { opacity: 0.85; }
 
-/* ─── Spotify 임베드 ─── */
+/* ─── 원곡 플레이어 ─── */
 .spotify-embed {
   background: var(--card);
-  border: 1px solid #1db954;
+  border: 1px solid var(--gold);
   border-radius: 12px;
   padding: 1rem;
+}
+
+.orig-player {
   display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .sp-close-btn {

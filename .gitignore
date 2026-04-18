@@ -2,4 +2,3 @@ node_modules/
 .env
 *.log
 .claude/
-music/*.mp3

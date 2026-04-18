@@ -21,56 +21,24 @@ app.use('/music', express.static('music'));
 
 app.get('/host', (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
 
-// ─── Spotify Client Credentials (로그인 불필요) ───
-let spotifyToken = { value: null, expiry: 0 };
-
-async function getSpotifyToken() {
-  if (spotifyToken.value && Date.now() < spotifyToken.expiry - 60000) return spotifyToken.value;
-  console.log('[Spotify] 토큰 발급 시도. CLIENT_ID:', SPOTIFY_CLIENT_ID ? '있음' : '없음!!!');
-  const resp = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
-    },
-    body: new URLSearchParams({ grant_type: 'client_credentials' }),
-  });
-  const data = await resp.json();
-  console.log('[Spotify] 토큰 응답:', data.error || '성공 (token 길이: ' + (data.access_token?.length || 0) + ')');
-  if (data.error) throw new Error(`Spotify 토큰 오류: ${data.error} - ${data.error_description}`);
-  spotifyToken.value  = data.access_token;
-  spotifyToken.expiry = Date.now() + data.expires_in * 1000;
-  return spotifyToken.value;
-}
-
-// 서버 시작 시 토큰 미리 발급
-getSpotifyToken().catch(e => console.error('[Spotify] 시작 토큰 실패:', e.message));
-
+// ─── iTunes Search API (무료, 인증 없음) ───
 app.get('/spotify/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.json([]);
   try {
-    console.log('[Spotify] 검색:', q);
-    const token = await getSpotifyToken();
-    const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=6&market=KR`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const text = await resp.text();
-    console.log('[Spotify] HTTP상태:', resp.status, '/ 응답 앞부분:', text.substring(0, 300));
-    const data = JSON.parse(text);
-    console.log('[Spotify] 검색 결과 수:', data.tracks?.items?.length ?? '오류: ' + JSON.stringify(data));
-    const tracks = (data.tracks?.items || []).map(t => ({
-      id:         t.id,
-      uri:        t.uri,
-      name:       t.name,
-      artist:     t.artists.map(a => a.name).join(', '),
-      albumArt:   t.album.images[1]?.url || '',
-      previewUrl: t.preview_url,
-      embedUrl:   `https://open.spotify.com/embed/track/${t.id}?utm_source=generator&theme=0`,
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=6&country=KR`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const tracks = (data.results || []).map(t => ({
+      id:         String(t.trackId),
+      name:       t.trackName,
+      artist:     t.artistName,
+      albumArt:   t.artworkUrl100?.replace('100x100', '300x300') || '',
+      previewUrl: t.previewUrl || '',
     }));
     res.json(tracks);
   } catch (e) {
-    console.error('[Spotify] 검색 오류:', e.message);
+    console.error('[iTunes] 검색 오류:', e.message);
     res.status(500).json({ error: e.message });
   }
 });

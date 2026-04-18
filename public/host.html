@@ -54,17 +54,16 @@
         <ul id="search-results" class="search-results"></ul>
       </div>
 
-      <!-- Spotify 임베드 플레이어 -->
+      <!-- 원곡 미리듣기 플레이어 -->
       <div class="spotify-embed hidden" id="spotify-embed">
-        <div class="section-label">🎵 원곡 재생 중</div>
-        <iframe id="spotify-iframe"
-          src=""
-          width="100%" height="80"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy">
-        </iframe>
-        <button class="sp-close-btn" onclick="closeSpotify()">✕ 닫기</button>
+        <div class="orig-player">
+          <div class="section-label" style="margin:0">🎵 원곡 미리듣기 (30초)</div>
+          <span id="orig-track-name" style="color:var(--gold);font-weight:700"></span>
+          <div style="display:flex;gap:0.7rem;align-items:center">
+            <button class="sp-search-btn" id="orig-play-btn" onclick="toggleOrigPlay()">▶ 재생</button>
+            <button class="sp-close-btn" onclick="closeSpotify()">✕ 닫기</button>
+          </div>
+        </div>
       </div>
 
       <!-- AI ↔ 원곡 토글 -->
