@@ -1,0 +1,249 @@
+.audience-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ─── 타이머 ─── */
+.audience-timer {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  background: rgba(251,191,36,0.15);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 0.6rem 1.5rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(251,191,36,0.7);
+  z-index: 100;
+  min-width: 100px;
+  text-align: center;
+}
+
+.audience-timer.urgent {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(239,68,68,0.15);
+  text-shadow: 0 0 20px rgba(239,68,68,0.7);
+  animation: pulse-timer 0.5s infinite;
+}
+
+@keyframes pulse-timer {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ─── 무대 ─── */
+.audience-stage {
+  width: 100%;
+  max-width: 900px;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  position: relative;
+}
+
+/* ─── 라운드 표시 ─── */
+.aud-round {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 6px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ─── 물음표 ─── */
+.aud-mystery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.5s;
+}
+
+.aud-qmarks {
+  font-family: 'Orbitron', monospace;
+  font-size: 10rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: float 3s ease-in-out infinite;
+  line-height: 1;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.aud-sublabel {
+  font-size: 1.2rem;
+  color: var(--muted);
+  letter-spacing: 4px;
+  font-family: 'Orbitron', monospace;
+}
+
+/* ─── 힌트 ─── */
+.aud-hint, .aud-artist-reveal {
+  text-align: center;
+  animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.aud-hint-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 5px;
+  color: var(--accent2);
+  margin-bottom: 1rem;
+}
+
+.aud-hint-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 700px;
+  line-height: 1.5;
+  background: var(--card);
+  border: 1px solid rgba(6,182,212,0.4);
+  border-radius: 16px;
+  padding: 1.5rem 2.5rem;
+  box-shadow: var(--glow2);
+}
+
+.aud-artist-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+}
+
+/* ─── 정답 공개 ─── */
+.aud-answer {
+  text-align: center;
+  animation: revealBig 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+@keyframes revealBig {
+  from { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.aud-answer-crown {
+  font-size: 4rem;
+  animation: bounce 0.8s ease 0.3s both;
+}
+
+@keyframes bounce {
+  0%   { transform: translateY(-30px); opacity: 0; }
+  60%  { transform: translateY(8px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.aud-answer-title {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(251,191,36,0.9);
+  line-height: 1.1;
+}
+
+.aud-answer-artist {
+  font-size: 1.5rem;
+  color: var(--accent2);
+  letter-spacing: 3px;
+}
+
+.aud-answer-lyrics {
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 2;
+  white-space: pre-line;
+  max-width: 600px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 14px;
+  padding: 1.2rem 2rem;
+  border: 1px solid rgba(251,191,36,0.2);
+  max-height: 220px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.aud-answer-lyrics::-webkit-scrollbar { width: 4px; }
+.aud-answer-lyrics::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+/* ─── 모드 뱃지 ─── */
+.aud-mode-badge {
+  position: fixed;
+  top: 1.5rem;
+  left: 2rem;
+  background: rgba(124,58,237,0.2);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: var(--accent2);
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+}
+
+/* ─── 진행 바 ─── */
+.aud-progress-wrap {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 700px;
+}
+
+.aud-progress-bar {
+  height: 8px;
+  background: var(--card);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(124,58,237,0.3);
+}
+
+.aud-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 4px;
+  transition: width 0.5s linear;
+  box-shadow: var(--glow);
+}
+
+.aud-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+}

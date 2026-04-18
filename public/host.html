@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎮 진행자 패널</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="host.css"/>
+</head>
+<body class="host-body">
+
+  <header>
+    <div class="logo">🎮 HOST PANEL</div>
+    <div class="header-btns">
+      <a href="/" target="_blank"><button>👥 참가자 화면 열기</button></a>
+      <button onclick="toggleManage()">⚙️ 곡 관리</button>
+    </div>
+  </header>
+
+  <div class="host-layout">
+
+    <!-- 왼쪽: 플레이리스트 -->
+    <aside class="host-playlist">
+      <div class="panel-title">📋 플레이리스트</div>
+      <ul id="host-playlist" class="playlist"></ul>
+    </aside>
+
+    <!-- 가운데: 메인 컨트롤 -->
+    <main class="host-main">
+
+      <!-- 현재 곡 정보 (항상 보임) -->
+      <div class="host-now-playing">
+        <div class="hnp-label">NOW PLAYING</div>
+        <div class="hnp-num" id="hnp-num">— / —</div>
+        <div class="hnp-title" id="hnp-title">곡을 선택하세요</div>
+        <div class="hnp-artist" id="hnp-artist"></div>
+      </div>
+
+      <!-- 오디오 (진행자 전용) -->
+      <audio id="audio-ai" preload="auto"></audio>
+      <audio id="audio-orig" preload="auto"></audio>
+
+      <!-- AI ↔ 원곡 토글 -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-mode-ai" onclick="setMode('ai')">🤖 AI 버전</button>
+        <button class="mode-btn" id="btn-mode-orig" onclick="setMode('original')">🎵 원곡</button>
+      </div>
+
+      <!-- 진행 바 -->
+      <div class="progress-wrap">
+        <span id="time-current">0:00</span>
+        <input type="range" id="progress-bar" value="0" min="0" max="100" oninput="seekAudio(this.value)"/>
+        <span id="time-total">0:00</span>
+      </div>
+
+      <!-- 컨트롤 버튼 -->
+      <div class="controls">
+        <button class="ctrl-btn" onclick="prevSong()">⏮</button>
+        <button class="ctrl-btn play-btn" id="btn-play" onclick="togglePlay()">▶</button>
+        <button class="ctrl-btn" onclick="nextSong()">⏭</button>
+      </div>
+
+      <!-- 타이머 -->
+      <div class="timer-section">
+        <div class="section-label">⏱ 타이머</div>
+        <div class="timer-row">
+          <input type="number" id="timer-input" value="30" min="5" max="300" style="width:70px"/>
+          <span>초</span>
+          <button class="timer-btn start" onclick="startTimer()">시작</button>
+          <button class="timer-btn stop" onclick="stopTimer()">초기화</button>
+          <div class="timer-display" id="timer-display">--</div>
+        </div>
+      </div>
+
+      <!-- 정답 공개 단계 -->
+      <div class="reveal-section">
+        <div class="section-label">🔓 정답 공개</div>
+        <div class="reveal-steps">
+          <button class="step-btn" id="step-0" onclick="setReveal(0)">🔒 숨기기</button>
+          <button class="step-btn" id="step-1" onclick="setReveal(1)">💡 힌트</button>
+          <button class="step-btn" id="step-2" onclick="setReveal(2)">🎤 아티스트</button>
+          <button class="step-btn gold" id="step-3" onclick="setReveal(3)">🎉 전체 공개!</button>
+        </div>
+      </div>
+
+      <!-- 가사 미리보기 (진행자만 보임) -->
+      <div class="lyrics-preview">
+        <div class="section-label">📝 가사 (진행자용)</div>
+        <div id="host-lyrics" class="host-lyrics-text">—</div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- 곡 관리 모달 -->
+  <div id="modal-manage" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-title">⚙️ 곡 관리</div>
+      <div class="form-section">
+        <div class="form-title">+ 새 곡 추가</div>
+        <label>AI 버전 MP3</label>
+        <input type="file" id="upload-file" accept=".mp3"/>
+        <label>원곡 MP3 (선택)</label>
+        <input type="file" id="upload-orig" accept=".mp3"/>
+        <label>곡 제목</label>
+        <input type="text" id="input-title" placeholder="예) 봄날"/>
+        <label>아티스트</label>
+        <input type="text" id="input-artist" placeholder="예) BTS"/>
+        <label>힌트</label>
+        <input type="text" id="input-hint" placeholder="예) 2017년 발매, 봄과 관련된 노래"/>
+        <label>가사 (진행자용)</label>
+        <textarea id="input-lyrics" rows="4" placeholder="가사 입력..."></textarea>
+        <button class="modal-btn add-btn" onclick="addSong()">➕ 추가</button>
+      </div>
+      <hr/>
+      <div class="form-section">
+        <div class="form-title">📝 곡 목록</div>
+        <ul id="manage-list" class="manage-list"></ul>
+      </div>
+      <button class="modal-btn close-btn" onclick="toggleManage()">닫기</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="host.js"></script>
+</body>
+</html>

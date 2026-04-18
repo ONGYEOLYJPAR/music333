@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎮 AI 뮤직 퀴즈</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="audience.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body class="audience-body">
+
+  <!-- 배경 파티클 -->
+  <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999"></canvas>
+
+  <!-- 상단 타이머 -->
+  <div class="audience-timer hidden" id="audience-timer">
+    <span id="timer-num">30</span>
+  </div>
+
+  <!-- 메인 무대 -->
+  <div class="audience-stage">
+
+    <!-- 퀴즈 번호 -->
+    <div class="aud-round" id="aud-round">Q —</div>
+
+    <!-- 물음표 상태 -->
+    <div class="aud-mystery" id="aud-mystery">
+      <div class="aud-qmarks">???</div>
+      <div class="aud-sublabel">어떤 곡일까요?</div>
+    </div>
+
+    <!-- 힌트 상태 (step 1) -->
+    <div class="aud-hint hidden" id="aud-hint">
+      <div class="aud-hint-label">💡 HINT</div>
+      <div class="aud-hint-text" id="aud-hint-text"></div>
+    </div>
+
+    <!-- 아티스트 공개 (step 2) -->
+    <div class="aud-artist-reveal hidden" id="aud-artist-reveal">
+      <div class="aud-hint-label">🎤 ARTIST</div>
+      <div class="aud-artist-name" id="aud-artist-name"></div>
+    </div>
+
+    <!-- 전체 정답 공개 (step 3) -->
+    <div class="aud-answer hidden" id="aud-answer">
+      <div class="aud-answer-crown">🏆</div>
+      <div class="aud-answer-title" id="aud-answer-title"></div>
+      <div class="aud-answer-artist" id="aud-answer-artist"></div>
+      <div class="aud-answer-lyrics" id="aud-answer-lyrics"></div>
+    </div>
+
+    <!-- 오디오 -->
+    <audio id="aud-audio" preload="auto"></audio>
+
+    <!-- 현재 재생 모드 표시 -->
+    <div class="aud-mode-badge hidden" id="aud-mode-badge">🤖 AI 버전</div>
+
+    <!-- 진행 바 (참가자용 - 읽기 전용) -->
+    <div class="aud-progress-wrap" id="aud-progress">
+      <div class="aud-progress-bar">
+        <div class="aud-progress-fill" id="aud-fill"></div>
+      </div>
+      <div class="aud-times">
+        <span id="aud-time-cur">0:00</span>
+        <span id="aud-time-tot">0:00</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

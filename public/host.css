@@ -1,0 +1,222 @@
+.host-body { background: #080816; }
+
+.host-layout {
+  display: flex;
+  height: calc(100vh - 62px);
+  overflow: hidden;
+}
+
+/* ─── 플레이리스트 사이드바 ─── */
+.host-playlist {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid rgba(124,58,237,0.3);
+  padding: 1.2rem;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.host-playlist::-webkit-scrollbar { width: 4px; }
+.host-playlist::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+/* ─── 메인 컨트롤 ─── */
+.host-main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+/* ─── 현재 곡 정보 ─── */
+.host-now-playing {
+  background: var(--card);
+  border: 1px solid rgba(124,58,237,0.4);
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hnp-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--accent2);
+  min-width: 90px;
+}
+
+.hnp-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-width: 50px;
+}
+
+.hnp-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  flex: 1;
+}
+
+.hnp-artist {
+  font-size: 0.85rem;
+  color: var(--accent2);
+}
+
+/* ─── 모드 토글 ─── */
+.mode-toggle {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(124,58,237,0.4);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent;
+  color: white;
+  font-weight: 700;
+  box-shadow: var(--glow);
+}
+
+/* ─── 섹션 라벨 ─── */
+.section-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+/* ─── 타이머 ─── */
+.timer-section {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(6,182,212,0.2);
+}
+
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.timer-row input {
+  background: var(--surface);
+  border: 1px solid rgba(124,58,237,0.4);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+  outline: none;
+}
+
+.timer-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.timer-btn.start { background: var(--success); color: #0a0a1a; font-weight: 700; }
+.timer-btn.stop  { background: var(--danger);  color: white; }
+
+.timer-display {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--gold);
+  min-width: 80px;
+  text-shadow: 0 0 15px rgba(251,191,36,0.5);
+}
+
+.timer-display.urgent { color: var(--danger); animation: blink 0.5s infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+/* ─── 정답 공개 단계 ─── */
+.reveal-section {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(251,191,36,0.2);
+}
+
+.reveal-steps {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.step-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.8rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(124,58,237,0.4);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.step-btn:hover { background: rgba(124,58,237,0.2); color: var(--text); }
+
+.step-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: var(--glow);
+}
+
+.step-btn.gold.active {
+  background: linear-gradient(135deg, var(--gold), #f59e0b);
+  border-color: var(--gold);
+  color: #0a0a1a;
+  box-shadow: 0 0 20px rgba(251,191,36,0.5);
+}
+
+/* ─── 가사 미리보기 ─── */
+.lyrics-preview {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(124,58,237,0.2);
+  flex: 1;
+}
+
+.host-lyrics-text {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-line;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.host-lyrics-text::-webkit-scrollbar { width: 4px; }
+.host-lyrics-text::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
