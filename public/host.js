@@ -7,10 +7,14 @@ let timerInterval = null;
 let timerLeft = 0;
 
 const audioAI    = document.getElementById('audio-ai');
+const audioOrig  = document.getElementById('audio-orig');
 const btnPlayAI  = document.getElementById('btn-play-ai');
+const btnPlayOrig = document.getElementById('btn-play-orig');
 const progressBar = document.getElementById('progress-bar');
+const progressBarOrig = document.getElementById('progress-bar-orig');
 const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
+let isOrigPlaying = false;
 
 // ─── 초기화 ───
 async function init() {
@@ -34,6 +38,22 @@ function loadSong(index, autoPlay = false) {
   document.getElementById('hnp-artist').textContent  = s.artist || '';
   document.getElementById('host-lyrics').textContent = s.lyrics || '(가사 없음)';
 
+  // 원곡 MP3 로드
+  const localPlayer = document.getElementById('orig-local-player');
+  if (s.originalFilename) {
+    audioOrig.src = `/music/${encodeURIComponent(s.originalFilename)}`;
+    audioOrig.load();
+    document.getElementById('orig-local-label').textContent = `🎵 ${s.title} (원곡)`;
+    localPlayer.classList.remove('hidden');
+    document.getElementById('yt-placeholder').classList.add('hidden');
+  } else {
+    audioOrig.src = '';
+    localPlayer.classList.add('hidden');
+    document.getElementById('yt-placeholder').classList.remove('hidden');
+  }
+  isOrigPlaying = false;
+  if (btnPlayOrig) btnPlayOrig.textContent = '▶';
+
   updatePlaylistHighlight();
   setReveal(0);
   socket.emit('host:load', { songIndex: index });
@@ -47,6 +67,36 @@ function loadSong(index, autoPlay = false) {
     isAIPlaying = false;
     btnPlayAI.textContent = '▶';
   }
+}
+
+// ─── 원곡 재생/정지 ───
+function toggleOrig() {
+  if (!audioOrig.src) return;
+  if (isOrigPlaying) {
+    audioOrig.pause();
+    btnPlayOrig.textContent = '▶';
+    isOrigPlaying = false;
+  } else {
+    audioOrig.play();
+    btnPlayOrig.textContent = '⏸';
+    isOrigPlaying = true;
+  }
+}
+
+audioOrig.addEventListener('timeupdate', () => {
+  if (!audioOrig.duration) return;
+  const pct = (audioOrig.currentTime / audioOrig.duration) * 100;
+  progressBarOrig.value = pct;
+  progressBarOrig.style.background = `linear-gradient(to right, #ff0000 ${pct}%, var(--card) ${pct}%)`;
+  document.getElementById('time-current-orig').textContent = fmt(audioOrig.currentTime);
+});
+audioOrig.addEventListener('loadedmetadata', () => {
+  document.getElementById('time-total-orig').textContent = fmt(audioOrig.duration);
+});
+audioOrig.addEventListener('ended', () => { isOrigPlaying = false; btnPlayOrig.textContent = '▶'; });
+
+function seekOrig(val) {
+  if (audioOrig.duration) audioOrig.currentTime = (val / 100) * audioOrig.duration;
 }
 
 // ─── AI 재생/정지 ───
@@ -189,6 +239,89 @@ function renderPlaylist() {
 
 function updatePlaylistHighlight() {
   document.querySelectorAll('#host-playlist li').forEach((li,i) => li.className = i===currentIndex?'active':'');
+}
+
+// ─── 일괄 업로드 ───
+let bulkQueue = [];
+let bulkIndex = 0;
+let bulkFilenames = [];
+
+async function startBulkUpload() {
+  const files = Array.from(document.getElementById('bulk-upload').files);
+  if (!files.length) return alert('MP3 파일을 선택해주세요!');
+
+  bulkQueue = files;
+  bulkIndex = 0;
+  bulkFilenames = [];
+
+  // 먼저 모든 파일 서버에 업로드
+  document.getElementById('bulk-progress').textContent = '파일 업로드 중...';
+  document.getElementById('bulk-queue').classList.remove('hidden');
+
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('mp3', file);
+    const { filename } = await fetch('/api/upload', { method:'POST', body: fd }).then(r=>r.json());
+    bulkFilenames.push(filename);
+  }
+
+  showBulkForm();
+}
+
+function showBulkForm() {
+  if (bulkIndex >= bulkQueue.length) {
+    document.getElementById('bulk-queue').classList.add('hidden');
+    document.getElementById('bulk-upload').value = '';
+    document.getElementById('bulk-progress').textContent = '';
+    alert(`✅ ${bulkQueue.length}곡 모두 추가 완료!`);
+    init();
+    renderManageList();
+    return;
+  }
+
+  const file = bulkQueue[bulkIndex];
+  const name = file.name.replace('.mp3','').replace(/[-_]/g,' ');
+  document.getElementById('bulk-file-label').textContent = `📄 ${bulkIndex+1}/${bulkQueue.length}: ${file.name}`;
+  document.getElementById('bulk-progress').textContent = `진행: ${bulkIndex+1} / ${bulkQueue.length}`;
+  document.getElementById('input-title').value  = name;
+  document.getElementById('input-artist').value = '';
+  document.getElementById('input-hint').value   = '';
+  document.getElementById('input-lyrics').value = '';
+  document.getElementById('input-title').focus();
+}
+
+async function saveBulkCurrent() {
+  const title  = document.getElementById('input-title').value.trim();
+  const artist = document.getElementById('input-artist').value.trim();
+  const hint   = document.getElementById('input-hint').value.trim();
+  const lyrics = document.getElementById('input-lyrics').value.trim();
+  if (!title) return alert('제목을 입력해주세요!');
+
+  // 원곡 파일 업로드 (있으면)
+  let originalFilename = '';
+  const origFile = document.getElementById('bulk-orig-file').files[0];
+  if (origFile) {
+    const fd = new FormData();
+    fd.append('mp3', origFile);
+    const r = await fetch('/api/upload', { method:'POST', body: fd }).then(r=>r.json());
+    originalFilename = r.filename;
+  }
+
+  await fetch('/api/songs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: bulkFilenames[bulkIndex], originalFilename, title, artist, hint, lyrics })
+  });
+
+  document.getElementById('bulk-orig-file').value = '';
+  bulkIndex++;
+  showBulkForm();
+}
+
+async function skipBulkCurrent() {
+  // 파일은 서버에 이미 올라갔지만 songs.json엔 안 넣음
+  bulkIndex++;
+  showBulkForm();
 }
 
 // ─── 곡 관리 모달 ───

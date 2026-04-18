@@ -164,6 +164,32 @@
   box-shadow: var(--glow);
 }
 
+/* ─── 원곡 로컬 플레이어 ─── */
+.orig-local-label {
+  font-size: 0.85rem;
+  color: var(--gold);
+  font-weight: 700;
+  text-align: center;
+}
+
+#progress-bar-orig {
+  flex: 1;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--surface);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+#progress-bar-orig::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #ff0000;
+  box-shadow: 0 0 8px rgba(255,0,0,0.5);
+}
+
 /* ─── YouTube 패널 ─── */
 .yt-input-row {
   display: flex;
