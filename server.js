@@ -70,13 +70,21 @@ let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0,
 
 io.on('connection', (socket) => {
   socket.emit('state:sync', gameState);
-  socket.on('host:load',   (d) => { gameState = { ...gameState, ...d, revealStep: 0 }; io.emit('player:load',  d); });
-  socket.on('host:play',   (d) => { gameState.isPlaying = true;  gameState.currentTime = d.currentTime; io.emit('player:play',   d); });
-  socket.on('host:pause',  (d) => { gameState.isPlaying = false; gameState.currentTime = d.currentTime; io.emit('player:pause',  d); });
-  socket.on('host:seek',   (d) => { gameState.currentTime = d.time; io.emit('player:seek',  d); });
-  socket.on('host:reveal', (d) => { gameState.revealStep = d.step; io.emit('player:reveal', d); });
+  socket.on('host:load',   (d) => { gameState = { ...gameState, ...d, revealStep: 0 }; io.emit('player:load', d); });
+  socket.on('host:play',   (d) => { gameState.isPlaying = true;  gameState.currentTime = d.currentTime; io.emit('player:play',  d); });
+  socket.on('host:pause',  (d) => { gameState.isPlaying = false; gameState.currentTime = d.currentTime; io.emit('player:pause', d); });
+  socket.on('host:seek',   (d) => { gameState.currentTime = d.time; io.emit('player:seek', d); });
+  socket.on('host:reveal', (d) => {
+    gameState.revealStep = d.step;
+    const songs = readSongs();
+    const song  = songs[gameState.songIndex] || {};
+    io.emit('player:reveal', { step: d.step, song });
+  });
   socket.on('host:mode',   (d) => { gameState.mode = d.mode; io.emit('player:mode', d); });
   socket.on('host:timer',  (d) => { Object.assign(gameState, d); io.emit('player:timer', d); });
+
+  // 접속 시 state:sync에도 곡 데이터 포함
+  socket.on('disconnect', () => {});
 });
 
 server.listen(PORT, () => {

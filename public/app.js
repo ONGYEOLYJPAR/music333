@@ -75,36 +75,33 @@ function applyMode(d) {
 // ─── 정답 공개 단계 ───
 function applyReveal(d) {
   const step = d.step;
-  const mystery       = document.getElementById('aud-mystery');
-  const hint          = document.getElementById('aud-hint');
-  const artistReveal  = document.getElementById('aud-artist-reveal');
-  const answer        = document.getElementById('aud-answer');
+  // 서버가 reveal 이벤트에 곡 데이터를 실어보냄
+  // fallback으로 로컬 songs 배열도 사용
+  const s = d.song || (songs.length > 0 ? songs[window._currentSongIndex || 0] : null) || {};
 
-  // 전부 숨기고
+  const mystery      = document.getElementById('aud-mystery');
+  const hint         = document.getElementById('aud-hint');
+  const artistReveal = document.getElementById('aud-artist-reveal');
+  const answer       = document.getElementById('aud-answer');
+
   mystery.classList.add('hidden');
   hint.classList.add('hidden');
   artistReveal.classList.add('hidden');
   answer.classList.add('hidden');
 
-  // 현재 곡 데이터는 서버 state에서 관리 — songs 배열 사용
-  // currentIndex를 state:sync에서 받은 값 사용
-  const s = songs.length > 0 ? songs[window._currentSongIndex || 0] : null;
-
   if (step === 0) {
     mystery.classList.remove('hidden');
   } else if (step === 1) {
     hint.classList.remove('hidden');
-    if (s) document.getElementById('aud-hint-text').textContent = s.hint || '(힌트 없음)';
+    document.getElementById('aud-hint-text').textContent = s.hint || '(힌트 없음)';
   } else if (step === 2) {
     artistReveal.classList.remove('hidden');
-    if (s) document.getElementById('aud-artist-name').textContent = s.artist || '???';
+    document.getElementById('aud-artist-name').textContent = s.artist || '???';
   } else if (step === 3) {
     answer.classList.remove('hidden');
-    if (s) {
-      document.getElementById('aud-answer-title').textContent  = s.title  || '???';
-      document.getElementById('aud-answer-artist').textContent = s.artist || '';
-      document.getElementById('aud-answer-lyrics').textContent = s.lyrics || '';
-    }
+    document.getElementById('aud-answer-title').textContent  = s.title  || '???';
+    document.getElementById('aud-answer-artist').textContent = s.artist || '';
+    document.getElementById('aud-answer-lyrics').textContent = s.lyrics || '';
     fireConfetti();
   }
 }
