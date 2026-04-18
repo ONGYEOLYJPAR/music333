@@ -55,7 +55,9 @@ app.get('/spotify/search', async (req, res) => {
     const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=6&market=KR`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const data = await resp.json();
+    const text = await resp.text();
+    console.log('[Spotify] HTTP상태:', resp.status, '/ 응답 앞부분:', text.substring(0, 300));
+    const data = JSON.parse(text);
     console.log('[Spotify] 검색 결과 수:', data.tracks?.items?.length ?? '오류: ' + JSON.stringify(data));
     const tracks = (data.tracks?.items || []).map(t => ({
       id:         t.id,
