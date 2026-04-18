@@ -2,97 +2,22 @@ const socket = io();
 
 let songs = [];
 let currentIndex = 0;
-let isPlaying = false;
-let currentMode = 'ai';
+let isAIPlaying = false;
 let timerInterval = null;
 let timerLeft = 0;
 
-const audioAI = document.getElementById('audio-ai');
-const btnPlay = document.getElementById('btn-play');
+const audioAI    = document.getElementById('audio-ai');
+const btnPlayAI  = document.getElementById('btn-play-ai');
 const progressBar = document.getElementById('progress-bar');
 const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
-
-// ─── Spotify 검색 + 임베드 ───
-async function searchSpotify() {
-  const input = document.getElementById('sp-search-input');
-  const q = input.value.trim();
-  if (!q) return;
-
-  const res = await fetch(`/spotify/search?q=${encodeURIComponent(q)}`);
-  const tracks = await res.json();
-
-  const ul  = document.getElementById('search-results');
-  const box = document.getElementById('spotify-search');
-  ul.innerHTML = '';
-
-  if (!tracks.length) {
-    ul.innerHTML = '<li style="color:var(--muted);padding:0.5rem">검색 결과 없음</li>';
-  } else {
-    tracks.forEach(t => {
-      const li = document.createElement('li');
-      li.className = 'search-result-item';
-      const safePrev = (t.previewUrl || '').replace(/'/g, "\\'");
-      const safeName = t.name.replace(/'/g, "\\'");
-      li.innerHTML = `
-        <img src="${t.albumArt}" width="42" height="42" style="border-radius:5px;flex-shrink:0"/>
-        <div class="sr-info">
-          <div class="sr-title">${t.name}</div>
-          <div class="sr-artist">${t.artist}</div>
-        </div>
-        ${t.previewUrl
-          ? `<button class="sr-select" onclick="loadOrigTrack('${safePrev}','${safeName}')">▶ 선택</button>`
-          : `<span style="color:var(--muted);font-size:0.75rem">미리듣기 없음</span>`
-        }`;
-      ul.appendChild(li);
-    });
-  }
-  box.classList.remove('hidden');
-}
-
-let origAudio = new Audio();
-
-function loadOrigTrack(previewUrl, trackName) {
-  origAudio.pause();
-  origAudio.src = previewUrl;
-  origAudio.load();
-
-  const embed = document.getElementById('spotify-embed');
-  const nameEl = document.getElementById('orig-track-name');
-  const playBtn = document.getElementById('orig-play-btn');
-  nameEl.textContent = trackName;
-  playBtn.textContent = '▶ 재생';
-  embed.classList.remove('hidden');
-  document.getElementById('spotify-search').classList.add('hidden');
-  document.getElementById('btn-mode-orig').textContent = `🎵 ${trackName}`;
-  socket.emit('host:mode', { mode: 'original' });
-
-  origAudio.onended = () => { playBtn.textContent = '▶ 재생'; };
-}
-
-function toggleOrigPlay() {
-  const btn = document.getElementById('orig-play-btn');
-  if (origAudio.paused) {
-    origAudio.play();
-    btn.textContent = '⏸ 정지';
-  } else {
-    origAudio.pause();
-    btn.textContent = '▶ 재생';
-  }
-}
-
-function closeSpotify() {
-  origAudio.pause();
-  document.getElementById('spotify-embed').classList.add('hidden');
-  setMode('ai');
-}
 
 // ─── 초기화 ───
 async function init() {
   const res = await fetch('/api/songs');
   songs = await res.json();
   renderPlaylist();
-  if (songs.length > 0) loadSong(currentIndex, false);
+  if (songs.length > 0) loadSong(0, false);
 }
 
 // ─── 곡 로드 ───
@@ -108,119 +33,94 @@ function loadSong(index, autoPlay = false) {
   document.getElementById('hnp-title').textContent   = s.title  || s.filename;
   document.getElementById('hnp-artist').textContent  = s.artist || '';
   document.getElementById('host-lyrics').textContent = s.lyrics || '(가사 없음)';
-  document.getElementById('btn-mode-orig').textContent = '🎵 원곡 (Spotify)';
-
-  // 곡 바뀌면 Spotify 트랙 초기화
-  spotifyTrackUri = null;
-  document.getElementById('spotify-search').classList.add('hidden');
 
   updatePlaylistHighlight();
   setReveal(0);
-
   socket.emit('host:load', { songIndex: index });
 
   if (autoPlay) {
-    isPlaying = true;
-    activeAudio().play();
-    btnPlay.textContent = '⏸';
+    audioAI.play();
+    btnPlayAI.textContent = '⏸';
+    isAIPlaying = true;
     socket.emit('host:play', { currentTime: 0 });
   } else {
-    isPlaying = false;
-    btnPlay.textContent = '▶';
+    isAIPlaying = false;
+    btnPlayAI.textContent = '▶';
   }
 }
 
-// ─── 재생/정지 ───
-function togglePlay() {
+// ─── AI 재생/정지 ───
+function toggleAI() {
   if (!songs.length) return;
-  if (isPlaying) {
-    pauseAll();
-    socket.emit('host:pause', { currentTime: getCurrentTime() });
+  if (isAIPlaying) {
+    audioAI.pause();
+    btnPlayAI.textContent = '▶';
+    isAIPlaying = false;
+    socket.emit('host:pause', { currentTime: audioAI.currentTime });
   } else {
-    playAll();
-    socket.emit('host:play', { currentTime: getCurrentTime() });
+    audioAI.play();
+    btnPlayAI.textContent = '⏸';
+    isAIPlaying = true;
+    socket.emit('host:play', { currentTime: audioAI.currentTime });
   }
 }
 
-function playAll() {
-  audioAI.play();
-  btnPlay.textContent = '⏸';
-  isPlaying = true;
+function prevSong() { if (songs.length) loadSong((currentIndex - 1 + songs.length) % songs.length, isAIPlaying); }
+function nextSong() { if (songs.length) loadSong((currentIndex + 1) % songs.length, isAIPlaying); }
+
+// ─── 랜덤 재생 ───
+function randomSong() {
+  if (songs.length < 2) return loadSong(0, true);
+  let idx;
+  do { idx = Math.floor(Math.random() * songs.length); } while (idx === currentIndex);
+  loadSong(idx, true);
 }
 
-function pauseAll() {
-  audioAI.pause();
-  btnPlay.textContent = '▶';
-  isPlaying = false;
+// ─── YouTube 원곡 ───
+function extractYoutubeId(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/|music\.youtube\.com\/watch\?v=)([^&\n?#]{11})/);
+  return m ? m[1] : null;
 }
 
-function getCurrentTime() {
-  return audioAI.currentTime;
+function loadYoutube() {
+  const url = document.getElementById('yt-url-input').value.trim();
+  const id  = extractYoutubeId(url);
+  if (!id) return alert('올바른 YouTube URL을 입력해주세요!');
+
+  const iframe = document.getElementById('yt-iframe');
+  iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+
+  document.getElementById('yt-embed-wrap').classList.remove('hidden');
+  document.getElementById('yt-placeholder').classList.add('hidden');
+  socket.emit('host:mode', { mode: 'original' });
 }
 
-function prevSong() { if (songs.length) loadSong((currentIndex - 1 + songs.length) % songs.length, isPlaying); }
-function nextSong() { if (songs.length) loadSong((currentIndex + 1) % songs.length, isPlaying); }
-
-// ─── 모드 전환 ───
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('btn-mode-ai').classList.toggle('active', mode === 'ai');
-  document.getElementById('btn-mode-orig').classList.toggle('active', mode === 'original');
-  socket.emit('host:mode', { mode });
-  if (mode === 'ai') {
-    document.getElementById('sp-search-input').value = '';
-  }
+function clearYoutube() {
+  document.getElementById('yt-iframe').src = '';
+  document.getElementById('yt-embed-wrap').classList.add('hidden');
+  document.getElementById('yt-placeholder').classList.remove('hidden');
+  document.getElementById('yt-url-input').value = '';
+  socket.emit('host:mode', { mode: 'ai' });
 }
 
-// ─── 정답 공개 단계 ───
-function setReveal(step) {
-  [0,1,2,3].forEach(i => {
-    document.getElementById(`step-${i}`).classList.toggle('active', i === step);
-  });
-  socket.emit('host:reveal', { step });
-}
-
-// ─── 타이머 ───
-function startTimer() {
-  clearInterval(timerInterval);
-  timerLeft = parseInt(document.getElementById('timer-input').value) || 30;
-  updateTimerDisplay();
-  socket.emit('host:timer', { timerRunning: true, timerSeconds: timerLeft });
-
-  timerInterval = setInterval(() => {
-    timerLeft--;
-    updateTimerDisplay();
-    socket.emit('host:timer', { timerRunning: true, timerSeconds: timerLeft });
-    if (timerLeft <= 0) { clearInterval(timerInterval); socket.emit('host:timer', { timerRunning: false, timerSeconds: 0 }); }
-  }, 1000);
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  timerLeft = 0;
-  document.getElementById('timer-display').textContent = '--';
-  document.getElementById('timer-display').classList.remove('urgent');
-  socket.emit('host:timer', { timerRunning: false, timerSeconds: 0 });
-}
-
-function updateTimerDisplay() {
-  const el = document.getElementById('timer-display');
-  el.textContent = timerLeft;
-  el.classList.toggle('urgent', timerLeft <= 10 && timerLeft > 0);
-}
+// URL 붙여넣기 시 자동 로드
+document.getElementById('yt-url-input').addEventListener('paste', (e) => {
+  setTimeout(() => {
+    const val = e.target.value.trim();
+    if (extractYoutubeId(val)) loadYoutube();
+  }, 50);
+});
 
 // ─── 진행 바 ───
 audioAI.addEventListener('timeupdate', () => {
-  if (currentMode !== 'ai' || !audioAI.duration) return;
+  if (!audioAI.duration) return;
   const pct = (audioAI.currentTime / audioAI.duration) * 100;
   progressBar.value = pct;
   progressBar.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--card) ${pct}%)`;
   timeCurrent.textContent = fmt(audioAI.currentTime);
 });
-audioAI.addEventListener('loadedmetadata', () => {
-  if (currentMode === 'ai') timeTotal.textContent = fmt(audioAI.duration);
-});
-audioAI.addEventListener('ended', () => { isPlaying = false; btnPlay.textContent = '▶'; });
+audioAI.addEventListener('loadedmetadata', () => { timeTotal.textContent = fmt(audioAI.duration); });
+audioAI.addEventListener('ended', () => { isAIPlaying = false; btnPlayAI.textContent = '▶'; });
 
 function seekAudio(val) {
   if (audioAI.duration) {
@@ -232,6 +132,41 @@ function seekAudio(val) {
 function fmt(s) {
   if (isNaN(s) || s == null) return '0:00';
   return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+}
+
+// ─── 타이머 ───
+function startTimer() {
+  clearInterval(timerInterval);
+  timerLeft = parseInt(document.getElementById('timer-input').value) || 30;
+  updateTimerDisplay();
+  socket.emit('host:timer', { timerRunning: true, timerSeconds: timerLeft });
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    updateTimerDisplay();
+    socket.emit('host:timer', { timerRunning: true, timerSeconds: timerLeft });
+    if (timerLeft <= 0) { clearInterval(timerInterval); socket.emit('host:timer', { timerRunning: false, timerSeconds: 0 }); }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerLeft = 0;
+  const el = document.getElementById('timer-display');
+  el.textContent = '--';
+  el.classList.remove('urgent');
+  socket.emit('host:timer', { timerRunning: false, timerSeconds: 0 });
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  el.textContent = timerLeft;
+  el.classList.toggle('urgent', timerLeft <= 10 && timerLeft > 0);
+}
+
+// ─── 정답 공개 ───
+function setReveal(step) {
+  [0,1,2,3].forEach(i => document.getElementById(`step-${i}`).classList.toggle('active', i === step));
+  socket.emit('host:reveal', { step });
 }
 
 // ─── 플레이리스트 ───
@@ -247,7 +182,7 @@ function renderPlaylist() {
         <div class="pl-title">${s.title || s.filename}</div>
         <div class="pl-artist">${s.artist || ''}</div>
       </div>`;
-    li.onclick = () => loadSong(i, isPlaying);
+    li.onclick = () => loadSong(i, isAIPlaying);
     ul.appendChild(li);
   });
 }
@@ -274,12 +209,11 @@ function renderManageList() {
 }
 
 async function addSong() {
-  const fileAI  = document.getElementById('upload-file').files[0];
-  const title   = document.getElementById('input-title').value.trim();
-  const artist  = document.getElementById('input-artist').value.trim();
-  const hint    = document.getElementById('input-hint').value.trim();
-  const lyrics  = document.getElementById('input-lyrics').value.trim();
-  const spotifyQuery = document.getElementById('input-spotify-query').value.trim();
+  const fileAI = document.getElementById('upload-file').files[0];
+  const title  = document.getElementById('input-title').value.trim();
+  const artist = document.getElementById('input-artist').value.trim();
+  const hint   = document.getElementById('input-hint').value.trim();
+  const lyrics = document.getElementById('input-lyrics').value.trim();
 
   if (!fileAI)  return alert('AI 버전 MP3를 선택해주세요!');
   if (!title)   return alert('곡 제목을 입력해주세요!');
@@ -291,10 +225,10 @@ async function addSong() {
   await fetch('/api/songs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename, title, artist, hint, lyrics, spotifyQuery })
+    body: JSON.stringify({ filename, title, artist, hint, lyrics })
   });
 
-  ['upload-file','input-title','input-artist','input-hint','input-lyrics','input-spotify-query'].forEach(id => {
+  ['upload-file','input-title','input-artist','input-hint','input-lyrics'].forEach(id => {
     document.getElementById(id).value = '';
   });
 
@@ -313,9 +247,10 @@ async function deleteSong(index) {
 // ─── 키보드 단축키 ───
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
-  if (e.code==='Space')      { e.preventDefault(); togglePlay(); }
+  if (e.code==='Space')      { e.preventDefault(); toggleAI(); }
   if (e.code==='ArrowRight') nextSong();
   if (e.code==='ArrowLeft')  prevSong();
+  if (e.code==='KeyR')       randomSong();
   if (e.code==='Digit1')     setReveal(0);
   if (e.code==='Digit2')     setReveal(1);
   if (e.code==='Digit3')     setReveal(2);
