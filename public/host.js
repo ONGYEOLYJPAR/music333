@@ -7,129 +7,60 @@ let currentMode = 'ai';
 let timerInterval = null;
 let timerLeft = 0;
 
-// Spotify
-let spotifyPlayer = null;
-let spotifyDeviceId = null;
-let spotifyToken = null;
-let spotifyTrackUri = null;  // 현재 로드된 원곡 URI
-
 const audioAI = document.getElementById('audio-ai');
 const btnPlay = document.getElementById('btn-play');
 const progressBar = document.getElementById('progress-bar');
 const timeCurrent = document.getElementById('time-current');
 const timeTotal   = document.getElementById('time-total');
 
-function activeAudio() { return currentMode === 'ai' ? audioAI : null; }
+// ─── Spotify 검색 + 임베드 ───
+async function searchSpotify() {
+  const input = document.getElementById('sp-search-input');
+  const q = input.value.trim();
+  if (!q) return;
 
-// ─── Spotify Web Playback SDK 초기화 ───
-window.onSpotifyWebPlaybackSDKReady = async () => {
-  const { token } = await fetch('/spotify/token').then(r => r.json());
-  if (!token) return;
-  spotifyToken = token;
-  updateSpotifyUI(true);
+  const res = await fetch(`/spotify/search?q=${encodeURIComponent(q)}`);
+  const tracks = await res.json();
 
-  spotifyPlayer = new Spotify.Player({
-    name: 'AI Music Quiz Host',
-    getOAuthToken: async cb => {
-      const r = await fetch('/spotify/token').then(r => r.json());
-      spotifyToken = r.token;
-      cb(spotifyToken);
-    },
-    volume: 0.8,
-  });
-
-  spotifyPlayer.addListener('ready', ({ device_id }) => {
-    spotifyDeviceId = device_id;
-    console.log('Spotify 준비 완료, device_id:', device_id);
-  });
-
-  spotifyPlayer.addListener('player_state_changed', (state) => {
-    if (!state || currentMode !== 'original') return;
-    const pos = state.position / 1000;
-    const dur = state.duration / 1000;
-    if (dur > 0) {
-      const pct = (pos / dur) * 100;
-      progressBar.value = pct;
-      progressBar.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--card) ${pct}%)`;
-      timeCurrent.textContent = fmt(pos);
-      timeTotal.textContent   = fmt(dur);
-    }
-    const paused = state.paused;
-    if (paused && isPlaying) { isPlaying = false; btnPlay.textContent = '▶'; }
-  });
-
-  await spotifyPlayer.connect();
-};
-
-function updateSpotifyUI(connected) {
-  const dot   = document.querySelector('.sp-dot');
-  const label = document.getElementById('sp-label');
-  const btn   = document.getElementById('sp-login-btn');
-  if (connected) {
-    dot.className   = 'sp-dot connected';
-    label.textContent = '✅ Spotify 연결됨';
-    btn.style.display = 'none';
-  }
-}
-
-async function spotifyLogin() {
-  window.location.href = '/spotify/login';
-}
-
-// Spotify 트랙 재생
-async function spotifyPlay(uri, positionMs = 0) {
-  if (!spotifyDeviceId || !spotifyToken) return;
-  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${spotifyToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uris: [uri], position_ms: positionMs }),
-  });
-}
-
-async function spotifyPause() {
-  if (!spotifyPlayer) return;
-  await spotifyPlayer.pause();
-}
-
-async function spotifySeek(ms) {
-  if (!spotifyPlayer) return;
-  await spotifyPlayer.seek(ms);
-}
-
-// 원곡 검색 (진행자가 모드 전환할 때 자동 실행)
-async function searchSpotify(query) {
-  const res = await fetch(`/spotify/search?q=${encodeURIComponent(query)}`);
-  if (!res.ok) return [];
-  return await res.json();
-}
-
-async function showSpotifySearch(song) {
-  const query = song.spotifyQuery || `${song.title} ${song.artist}`;
-  const results = await searchSpotify(query);
-  const ul = document.getElementById('search-results');
+  const ul  = document.getElementById('search-results');
   const box = document.getElementById('spotify-search');
   ul.innerHTML = '';
-  if (!results.length) { ul.innerHTML = '<li style="color:var(--muted)">검색 결과 없음</li>'; }
-  results.forEach(track => {
-    const li = document.createElement('li');
-    li.className = 'search-result-item';
-    li.innerHTML = `
-      <img src="${track.album.images[2]?.url || ''}" width="40" height="40" style="border-radius:4px;flex-shrink:0"/>
-      <div class="sr-info">
-        <div class="sr-title">${track.name}</div>
-        <div class="sr-artist">${track.artists.map(a=>a.name).join(', ')}</div>
-      </div>
-      <button class="sr-select" onclick="selectSpotifyTrack('${track.uri}', '${track.name.replace(/'/g,"\\'")}')">선택</button>`;
-    ul.appendChild(li);
-  });
+
+  if (!tracks.length) {
+    ul.innerHTML = '<li style="color:var(--muted);padding:0.5rem">검색 결과 없음</li>';
+  } else {
+    tracks.forEach(t => {
+      const li = document.createElement('li');
+      li.className = 'search-result-item';
+      const safeId   = t.id;
+      const safeName = t.name.replace(/'/g, "\\'");
+      li.innerHTML = `
+        <img src="${t.albumArt}" width="42" height="42" style="border-radius:5px;flex-shrink:0"/>
+        <div class="sr-info">
+          <div class="sr-title">${t.name}</div>
+          <div class="sr-artist">${t.artist}</div>
+        </div>
+        <button class="sr-select" onclick="loadSpotifyEmbed('${safeId}','${safeName}')">▶ 재생</button>`;
+      ul.appendChild(li);
+    });
+  }
   box.classList.remove('hidden');
 }
 
-function selectSpotifyTrack(uri, name) {
-  spotifyTrackUri = uri;
+function loadSpotifyEmbed(trackId, trackName) {
+  const iframe = document.getElementById('spotify-iframe');
+  iframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
+  document.getElementById('spotify-embed').classList.remove('hidden');
   document.getElementById('spotify-search').classList.add('hidden');
-  document.getElementById('btn-mode-orig').textContent = `🎵 ${name}`;
-  if (currentMode === 'original') spotifyPlay(uri);
+  document.getElementById('btn-mode-orig').textContent = `🎵 ${trackName}`;
+  socket.emit('host:mode', { mode: 'original' });
+}
+
+function closeSpotify() {
+  const iframe = document.getElementById('spotify-iframe');
+  iframe.src = '';
+  document.getElementById('spotify-embed').classList.add('hidden');
+  setMode('ai');
 }
 
 // ─── 초기화 ───
@@ -188,48 +119,32 @@ function togglePlay() {
 }
 
 function playAll() {
-  if (currentMode === 'ai') {
-    audioAI.play();
-  } else {
-    if (spotifyTrackUri) spotifyPlay(spotifyTrackUri, Math.round(getCurrentTime() * 1000));
-  }
+  audioAI.play();
   btnPlay.textContent = '⏸';
   isPlaying = true;
 }
 
 function pauseAll() {
   audioAI.pause();
-  if (spotifyPlayer) spotifyPause();
   btnPlay.textContent = '▶';
   isPlaying = false;
 }
 
 function getCurrentTime() {
-  return currentMode === 'ai' ? audioAI.currentTime : 0;
+  return audioAI.currentTime;
 }
 
 function prevSong() { if (songs.length) loadSong((currentIndex - 1 + songs.length) % songs.length, isPlaying); }
 function nextSong() { if (songs.length) loadSong((currentIndex + 1) % songs.length, isPlaying); }
 
-// ─── 모드 전환 (AI ↔ Spotify 원곡) ───
-async function setMode(mode) {
-  const wasPlaying = isPlaying;
-  pauseAll();
+// ─── 모드 전환 ───
+function setMode(mode) {
   currentMode = mode;
-
   document.getElementById('btn-mode-ai').classList.toggle('active', mode === 'ai');
   document.getElementById('btn-mode-orig').classList.toggle('active', mode === 'original');
-
   socket.emit('host:mode', { mode });
-
-  if (mode === 'original') {
-    if (!spotifyToken) { alert('먼저 Spotify 로그인을 해주세요!'); setMode('ai'); return; }
-    const song = songs[currentIndex];
-    if (!spotifyTrackUri) await showSpotifySearch(song);
-    else if (wasPlaying && spotifyTrackUri) spotifyPlay(spotifyTrackUri);
-  } else {
-    document.getElementById('spotify-search').classList.add('hidden');
-    if (wasPlaying) { audioAI.play(); isPlaying = true; btnPlay.textContent = '⏸'; }
+  if (mode === 'ai') {
+    document.getElementById('sp-search-input').value = '';
   }
 }
 
@@ -284,14 +199,9 @@ audioAI.addEventListener('loadedmetadata', () => {
 audioAI.addEventListener('ended', () => { isPlaying = false; btnPlay.textContent = '▶'; });
 
 function seekAudio(val) {
-  if (currentMode === 'ai' && audioAI.duration) {
+  if (audioAI.duration) {
     audioAI.currentTime = (val / 100) * audioAI.duration;
     socket.emit('host:seek', { time: audioAI.currentTime });
-  } else if (currentMode === 'original' && spotifyPlayer) {
-    spotifyPlayer.getDuration().then(dur => {
-      const ms = (val / 100) * dur;
-      spotifySeek(ms);
-    });
   }
 }
 

@@ -71,40 +71,59 @@
 .spotify-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1rem;
   background: #0d0d0d;
   border: 1px solid #1db954;
   border-radius: 12px;
-  padding: 0.7rem 1.2rem;
+  padding: 0.8rem 1.2rem;
 }
 
-#spotify-status {
+.sp-search-row {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
+  flex: 1;
+  gap: 0.5rem;
 }
 
-.sp-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.sp-search-row input {
+  flex: 1;
 }
-.sp-dot.connected    { background: #1db954; box-shadow: 0 0 8px #1db954; }
-.sp-dot.disconnected { background: var(--muted); }
 
-.sp-login-btn {
+.sp-search-btn {
   background: #1db954;
   border: none;
-  border-radius: 20px;
+  border-radius: 8px;
   color: black;
   font-weight: 700;
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  white-space: nowrap;
   transition: opacity 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
 }
-.sp-login-btn:hover { opacity: 0.85; }
+.sp-search-btn:hover { opacity: 0.85; }
+
+/* ─── Spotify 임베드 ─── */
+.spotify-embed {
+  background: var(--card);
+  border: 1px solid #1db954;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.sp-close-btn {
+  background: transparent;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  align-self: flex-end;
+  font-size: 0.8rem;
+}
+.sp-close-btn:hover { color: var(--text); border-color: var(--text); }
 
 /* ─── Spotify 검색 결과 ─── */
 .spotify-search {
@@ -112,6 +131,8 @@
   border: 1px solid #1db954;
   border-radius: 12px;
   padding: 1rem;
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .search-results { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }

@@ -21,70 +21,50 @@ app.use('/music', express.static('music'));
 
 app.get('/host', (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
 
-// ─── Spotify OAuth ───
-let spotify = { accessToken: null, refreshToken: null, expiry: 0 };
+// ─── Spotify Client Credentials (로그인 불필요) ───
+let spotifyToken = { value: null, expiry: 0 };
 
-app.get('/spotify/login', (req, res) => {
-  const scopes = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
-  const url = new URL('https://accounts.spotify.com/authorize');
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('client_id', SPOTIFY_CLIENT_ID);
-  url.searchParams.set('scope', scopes);
-  url.searchParams.set('redirect_uri', REDIRECT_URI);
-  res.redirect(url.toString());
-});
-
-app.get('/spotify/callback', async (req, res) => {
-  const { code, error } = req.query;
-  if (error) return res.send(`Spotify 오류: ${error}`);
-
+async function getSpotifyToken() {
+  if (spotifyToken.value && Date.now() < spotifyToken.expiry - 60000) return spotifyToken.value;
   const resp = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
     },
-    body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }),
+    body: new URLSearchParams({ grant_type: 'client_credentials' }),
   });
   const data = await resp.json();
-  if (data.error) return res.send(`토큰 오류: ${data.error_description}`);
-
-  spotify.accessToken  = data.access_token;
-  spotify.refreshToken = data.refresh_token;
-  spotify.expiry       = Date.now() + data.expires_in * 1000;
-  res.redirect('/host?spotify=ok');
-});
-
-async function refreshSpotifyToken() {
-  if (!spotify.refreshToken) return;
-  const resp = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
-    },
-    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: spotify.refreshToken }),
-  });
-  const data = await resp.json();
-  spotify.accessToken = data.access_token;
-  spotify.expiry      = Date.now() + data.expires_in * 1000;
+  spotifyToken.value  = data.access_token;
+  spotifyToken.expiry = Date.now() + data.expires_in * 1000;
+  return spotifyToken.value;
 }
 
-app.get('/spotify/token', async (req, res) => {
-  if (!spotify.accessToken) return res.json({ token: null });
-  if (Date.now() > spotify.expiry - 60000) await refreshSpotifyToken();
-  res.json({ token: spotify.accessToken });
-});
+// 서버 시작 시 토큰 미리 발급
+getSpotifyToken().catch(console.error);
 
 app.get('/spotify/search', async (req, res) => {
-  if (!spotify.accessToken) return res.status(401).json({ error: 'not_logged_in' });
-  if (Date.now() > spotify.expiry - 60000) await refreshSpotifyToken();
   const q = req.query.q;
-  const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=5&market=KR`, {
-    headers: { Authorization: `Bearer ${spotify.accessToken}` },
-  });
-  const data = await resp.json();
-  res.json(data.tracks?.items || []);
+  if (!q) return res.json([]);
+  try {
+    const token = await getSpotifyToken();
+    const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=6&market=KR`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await resp.json();
+    const tracks = (data.tracks?.items || []).map(t => ({
+      id:         t.id,
+      uri:        t.uri,
+      name:       t.name,
+      artist:     t.artists.map(a => a.name).join(', '),
+      albumArt:   t.album.images[1]?.url || '',
+      previewUrl: t.preview_url,
+      embedUrl:   `https://open.spotify.com/embed/track/${t.id}?utm_source=generator&theme=0`,
+    }));
+    res.json(tracks);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─── 파일 업로드 ───
