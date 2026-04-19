@@ -22,6 +22,7 @@ socket.on('state:sync', async (state) => {
   applyReveal({ step: state.revealStep });
   applyMode({ mode: state.mode });
   if (state.timerRunning && state.timerSeconds > 0) applyTimer({ timerRunning: true, timerSeconds: state.timerSeconds });
+  if (state.youtubeVideoId) applyYoutube({ videoId: state.youtubeVideoId });
 });
 
 // ─── 진행자 이벤트 수신 ───
@@ -33,6 +34,19 @@ socket.on('player:reveal', applyReveal);
 socket.on('player:mode',   applyMode);
 socket.on('player:timer',  applyTimer);
 socket.on('player:hint',   applyLiveHint);
+socket.on('player:youtube', applyYoutube);
+
+function applyYoutube(d) {
+  const wrap   = document.getElementById('aud-youtube-wrap');
+  const iframe = document.getElementById('aud-youtube-iframe');
+  if (!d.videoId) {
+    wrap.classList.add('hidden');
+    iframe.src = '';
+    return;
+  }
+  iframe.src = `https://www.youtube.com/embed/${d.videoId}`;
+  wrap.classList.remove('hidden');
+}
 
 function applyLoad(d) {
   const s = songs[d.songIndex];

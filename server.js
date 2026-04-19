@@ -66,10 +66,10 @@ app.post('/api/upload', upload.single('mp3'), (req, res) => {
 });
 
 // ─── Socket.io ───
-let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0, mode: 'ai', timerSeconds: 0, timerRunning: false };
+let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0, mode: 'ai', timerSeconds: 0, timerRunning: false, youtubeVideoId: '' };
 
 io.on('connection', (socket) => {
-  socket.emit('state:sync', gameState);
+  socket.emit('state:sync', { ...gameState, liveHint: gameState.liveHint || '' });
   socket.on('host:load',   (d) => { gameState = { ...gameState, ...d, revealStep: 0 }; io.emit('player:load', d); });
   socket.on('host:play',   (d) => { gameState.isPlaying = true;  gameState.currentTime = d.currentTime; io.emit('player:play',  d); });
   socket.on('host:pause',  (d) => { gameState.isPlaying = false; gameState.currentTime = d.currentTime; io.emit('player:pause', d); });
@@ -83,6 +83,7 @@ io.on('connection', (socket) => {
   socket.on('host:mode',   (d) => { gameState.mode = d.mode; io.emit('player:mode', d); });
   socket.on('host:timer',  (d) => { Object.assign(gameState, d); io.emit('player:timer', d); });
   socket.on('host:hint',   (d) => { gameState.liveHint = d.text; io.emit('player:hint', d); });
+  socket.on('host:youtube', (d) => { gameState.youtubeVideoId = d.videoId; io.emit('player:youtube', d); });
 
   // 접속 시 state:sync에도 곡 데이터 포함
   socket.on('disconnect', () => {});

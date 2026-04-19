@@ -153,6 +153,7 @@ function loadYoutube() {
   document.getElementById('yt-embed-wrap').classList.remove('hidden');
   document.getElementById('yt-placeholder').classList.add('hidden');
   socket.emit('host:mode', { mode: 'original' });
+  socket.emit('host:youtube', { videoId: id });
 }
 
 function clearYoutube() {
@@ -161,6 +162,7 @@ function clearYoutube() {
   document.getElementById('yt-placeholder').classList.remove('hidden');
   document.getElementById('yt-url-input').value = '';
   socket.emit('host:mode', { mode: 'ai' });
+  socket.emit('host:youtube', { videoId: '' });
 }
 
 // URL 붙여넣기 시 자동 로드
