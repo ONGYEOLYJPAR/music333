@@ -43,12 +43,12 @@
         <!-- AI 버전 패널 -->
         <div class="split-panel">
           <div class="split-header ai-header">🤖 AI 버전</div>
-          <audio id="audio-ai" preload="auto"></audio>
+          <audio id="audio-ai" preload="auto" muted></audio>
           <div class="controls">
             <button class="ctrl-btn" onclick="prevSong()">⏮</button>
             <button class="ctrl-btn play-btn" id="btn-play-ai" onclick="toggleAI()">▶</button>
             <button class="ctrl-btn" onclick="nextSong()">⏭</button>
-            <button class="ctrl-btn" id="btn-mute-ai" onclick="toggleAIMute()" title="호스트 소리 끄기">🔇</button>
+            <button class="ctrl-btn" id="btn-mute-ai" onclick="toggleAIMute()" title="호스트 소리 켜기">🔊</button>
           </div>
           <div class="progress-wrap">
             <span id="time-current">0:00</span>
