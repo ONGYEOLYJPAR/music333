@@ -125,6 +125,13 @@ function toggleAI() {
   }
 }
 
+function toggleAIMute() {
+  const btn = document.getElementById('btn-mute-ai');
+  audioAI.muted = !audioAI.muted;
+  btn.textContent = audioAI.muted ? '🔊' : '🔇';
+  btn.title = audioAI.muted ? '호스트 소리 켜기' : '호스트 소리 끄기';
+}
+
 function prevSong() { if (songs.length) loadSong((currentIndex - 1 + songs.length) % songs.length, isAIPlaying); }
 function nextSong() { if (songs.length) loadSong((currentIndex + 1) % songs.length, isAIPlaying); }
 
