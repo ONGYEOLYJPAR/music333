@@ -35,17 +35,29 @@ socket.on('player:mode',   applyMode);
 socket.on('player:timer',  applyTimer);
 socket.on('player:hint',   applyLiveHint);
 socket.on('player:youtube', applyYoutube);
+socket.on('player:yt-play',  (d) => { if (audYtPlayer && audYtPlayer.seekTo) { audYtPlayer.seekTo(d.time, true); audYtPlayer.playVideo(); } });
+socket.on('player:yt-pause', (d) => { if (audYtPlayer && audYtPlayer.pauseVideo) audYtPlayer.pauseVideo(); });
+
+let audYtPlayer = null;
+
+function onYouTubeIframeAPIReady() { /* YT API 준비 완료 */ }
 
 function applyYoutube(d) {
-  const wrap   = document.getElementById('aud-youtube-wrap');
-  const iframe = document.getElementById('aud-youtube-iframe');
+  const wrap = document.getElementById('aud-youtube-wrap');
   if (!d.videoId) {
     wrap.classList.add('hidden');
-    iframe.src = '';
+    if (audYtPlayer && audYtPlayer.stopVideo) audYtPlayer.stopVideo();
     return;
   }
-  iframe.src = `https://www.youtube.com/embed/${d.videoId}`;
   wrap.classList.remove('hidden');
+  if (audYtPlayer && audYtPlayer.loadVideoById) {
+    audYtPlayer.loadVideoById(d.videoId);
+    return;
+  }
+  audYtPlayer = new YT.Player('aud-yt-player', {
+    height: '100%', width: '100%', videoId: d.videoId,
+    playerVars: { autoplay: 0, mute: 0 },
+  });
 }
 
 function applyLoad(d) {

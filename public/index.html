@@ -58,8 +58,7 @@
 
     <!-- 유튜브 원곡 영상 -->
     <div class="aud-youtube-wrap hidden" id="aud-youtube-wrap">
-      <iframe id="aud-youtube-iframe" width="640" height="360" frameborder="0" allowfullscreen
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      <div id="aud-yt-player"></div>
     </div>
 
     <!-- 오디오 -->
@@ -81,6 +80,7 @@
 
   </div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>

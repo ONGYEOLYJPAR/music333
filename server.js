@@ -83,7 +83,9 @@ io.on('connection', (socket) => {
   socket.on('host:mode',   (d) => { gameState.mode = d.mode; io.emit('player:mode', d); });
   socket.on('host:timer',  (d) => { Object.assign(gameState, d); io.emit('player:timer', d); });
   socket.on('host:hint',   (d) => { gameState.liveHint = d.text; io.emit('player:hint', d); });
-  socket.on('host:youtube', (d) => { gameState.youtubeVideoId = d.videoId; io.emit('player:youtube', d); });
+  socket.on('host:youtube',   (d) => { gameState.youtubeVideoId = d.videoId; io.emit('player:youtube', d); });
+  socket.on('host:yt-play',  (d) => { io.emit('player:yt-play',  d); });
+  socket.on('host:yt-pause', (d) => { io.emit('player:yt-pause', d); });
 
   // 접속 시 state:sync에도 곡 데이터 포함
   socket.on('disconnect', () => {});

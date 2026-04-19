@@ -136,31 +136,68 @@ function randomSong() {
   loadSong(idx, true);
 }
 
-// ─── YouTube 원곡 ───
+// ─── YouTube 원곡 (IFrame Player API) ───
+let ytPlayer = null;
+let _ytVideoId = '';
+let _ytShownOnAudience = false;
+let _hostMuted = true;
+
 function extractYoutubeId(url) {
   const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/|music\.youtube\.com\/watch\?v=)([^&\n?#]{11})/);
   return m ? m[1] : null;
 }
+
+function onYouTubeIframeAPIReady() { /* YT API 로드 완료 — loadYoutube()에서 플레이어 생성 */ }
 
 function loadYoutube() {
   const url = document.getElementById('yt-url-input').value.trim();
   const id  = extractYoutubeId(url);
   if (!id) return alert('올바른 YouTube URL을 입력해주세요!');
 
-  const iframe = document.getElementById('yt-iframe');
-  iframe.src = `https://www.youtube.com/embed/${id}`;
-
   document.getElementById('yt-embed-wrap').classList.remove('hidden');
   document.getElementById('yt-placeholder').classList.add('hidden');
   socket.emit('host:mode', { mode: 'original' });
+
   _ytVideoId = id;
   _ytShownOnAudience = false;
-  const btn = document.getElementById('yt-send-btn');
-  if (btn) { btn.textContent = '📺 참가자 화면에 표시'; btn.classList.remove('active'); }
+  document.getElementById('yt-send-btn').textContent = '📺 참가자 화면에 표시';
+  document.getElementById('yt-send-btn').classList.remove('active');
+
+  if (ytPlayer && ytPlayer.loadVideoById) {
+    ytPlayer.loadVideoById(id);
+    return;
+  }
+  ytPlayer = new YT.Player('yt-player', {
+    height: '185', width: '100%', videoId: id,
+    playerVars: { autoplay: 0, mute: 1 },
+    events: { onStateChange: onHostYTStateChange }
+  });
+  _hostMuted = true;
+  document.getElementById('yt-mute-btn').textContent = '🔊 소리 켜기';
 }
 
-let _ytVideoId = '';
-let _ytShownOnAudience = false;
+function onHostYTStateChange(event) {
+  if (!_ytShownOnAudience) return;
+  if (event.data === YT.PlayerState.PLAYING) {
+    socket.emit('host:yt-play', { time: ytPlayer.getCurrentTime() });
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    socket.emit('host:yt-pause', { time: ytPlayer.getCurrentTime() });
+  }
+}
+
+function toggleHostMute() {
+  if (!ytPlayer) return;
+  const btn = document.getElementById('yt-mute-btn');
+  if (_hostMuted) {
+    ytPlayer.unMute();
+    _hostMuted = false;
+    btn.textContent = '🔇 소리 끄기';
+  } else {
+    ytPlayer.mute();
+    _hostMuted = true;
+    btn.textContent = '🔊 소리 켜기';
+  }
+}
 
 function toggleYoutubeOnAudience() {
   const btn = document.getElementById('yt-send-btn');
@@ -178,14 +215,14 @@ function toggleYoutubeOnAudience() {
 }
 
 function clearYoutube() {
-  document.getElementById('yt-iframe').src = '';
+  if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
   document.getElementById('yt-embed-wrap').classList.add('hidden');
   document.getElementById('yt-placeholder').classList.remove('hidden');
   document.getElementById('yt-url-input').value = '';
   _ytVideoId = '';
   _ytShownOnAudience = false;
-  const btn = document.getElementById('yt-send-btn');
-  if (btn) { btn.textContent = '📺 참가자 화면에 표시'; btn.classList.remove('active'); }
+  document.getElementById('yt-send-btn').textContent = '📺 참가자 화면에 표시';
+  document.getElementById('yt-send-btn').classList.remove('active');
   socket.emit('host:mode', { mode: 'ai' });
   socket.emit('host:youtube', { videoId: '' });
 }
