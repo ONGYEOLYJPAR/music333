@@ -153,7 +153,28 @@ function loadYoutube() {
   document.getElementById('yt-embed-wrap').classList.remove('hidden');
   document.getElementById('yt-placeholder').classList.add('hidden');
   socket.emit('host:mode', { mode: 'original' });
-  socket.emit('host:youtube', { videoId: id });
+  _ytVideoId = id;
+  _ytShownOnAudience = false;
+  const btn = document.getElementById('yt-send-btn');
+  if (btn) { btn.textContent = '📺 참가자 화면에 표시'; btn.classList.remove('active'); }
+}
+
+let _ytVideoId = '';
+let _ytShownOnAudience = false;
+
+function toggleYoutubeOnAudience() {
+  const btn = document.getElementById('yt-send-btn');
+  if (_ytShownOnAudience) {
+    socket.emit('host:youtube', { videoId: '' });
+    _ytShownOnAudience = false;
+    btn.textContent = '📺 참가자 화면에 표시';
+    btn.classList.remove('active');
+  } else {
+    socket.emit('host:youtube', { videoId: _ytVideoId });
+    _ytShownOnAudience = true;
+    btn.textContent = '🙈 참가자 화면에서 숨기기';
+    btn.classList.add('active');
+  }
 }
 
 function clearYoutube() {
@@ -161,6 +182,10 @@ function clearYoutube() {
   document.getElementById('yt-embed-wrap').classList.add('hidden');
   document.getElementById('yt-placeholder').classList.remove('hidden');
   document.getElementById('yt-url-input').value = '';
+  _ytVideoId = '';
+  _ytShownOnAudience = false;
+  const btn = document.getElementById('yt-send-btn');
+  if (btn) { btn.textContent = '📺 참가자 화면에 표시'; btn.classList.remove('active'); }
   socket.emit('host:mode', { mode: 'ai' });
   socket.emit('host:youtube', { videoId: '' });
 }
