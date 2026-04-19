@@ -1,5 +1,11 @@
 const socket = io();
 
+function unlockAudio() {
+  const overlay = document.getElementById('audio-unlock');
+  audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+  overlay.style.display = 'none';
+}
+
 let songs = [];
 let currentMode = 'ai';
 let confettiCanvas = document.getElementById('confetti-canvas');
