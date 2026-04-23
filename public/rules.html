@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍺 뮤직퀴즈 술게임 규칙</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --surface: #12122a;
+      --card: #1a1a35;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --gold: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --beer: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 50%);
+      padding: 2rem 1rem 4rem;
+    }
+
+    .page-title {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 4px;
+      margin-bottom: 0.4rem;
+    }
+
+    .page-subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    /* ─── 상금 배너 ─── */
+    .prize-banner {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .prize-card {
+      flex: 1;
+      max-width: 220px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 1.4rem 1rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prize-card.first {
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 24px rgba(251,191,36,0.35);
+    }
+
+    .prize-card.second {
+      border: 2px solid #94a3b8;
+      box-shadow: 0 0 16px rgba(148,163,184,0.2);
+    }
+
+    .prize-rank {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      margin-bottom: 0.5rem;
+      color: var(--muted);
+    }
+
+    .prize-card.first .prize-rank { color: var(--gold); }
+
+    .prize-medal {
+      font-size: 2.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .prize-amount {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .prize-card.first .prize-amount { color: var(--gold); }
+
+    .prize-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ─── 섹션 카드 ─── */
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 1.5rem 1.6rem;
+      border: 1px solid rgba(124,58,237,0.25);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .section-icon {
+      font-size: 1.4rem;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      color: var(--accent2);
+    }
+
+    /* ─── 기본 진행 ─── */
+    .flow-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      background: rgba(124,58,237,0.08);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+    }
+
+    .flow-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      min-width: 24px;
+      padding-top: 2px;
+    }
+
+    .flow-text {
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .flow-text em {
+      font-style: normal;
+      color: var(--accent2);
+      font-weight: 700;
+    }
+
+    /* ─── 술게임 룰 ─── */
+    .drink-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .drink-rule {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(245,158,11,0.07);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+    }
+
+    .drink-icon {
+      font-size: 1.5rem;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .drink-body {
+      flex: 1;
+    }
+
+    .drink-condition {
+      font-size: 0.85rem;
+      color: var(--beer);
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .drink-action {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .drink-badge {
+      background: rgba(245,158,11,0.2);
+      border: 1px solid var(--beer);
+      border-radius: 20px;
+      font-size: 0.72rem;
+      color: var(--beer);
+      padding: 0.2rem 0.6rem;
+      white-space: nowrap;
+    }
+
+    /* 위험 룰 강조 */
+    .drink-rule.danger {
+      background: rgba(239,68,68,0.08);
+      border-color: rgba(239,68,68,0.3);
+    }
+
+    .drink-rule.danger .drink-condition { color: var(--danger); }
+    .drink-rule.danger .drink-badge { background: rgba(239,68,68,0.2); border-color: var(--danger); color: var(--danger); }
+
+    /* ─── 점수 테이블 ─── */
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .score-table th {
+      background: rgba(124,58,237,0.2);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 1.5px;
+      color: var(--accent2);
+      border-bottom: 1px solid rgba(124,58,237,0.3);
+    }
+
+    .score-table td {
+      padding: 0.65rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .score-table tr:last-child td { border-bottom: none; }
+    .score-table tr:hover td { background: rgba(124,58,237,0.06); }
+
+    .score-pts {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* ─── 특수 미션 ─── */
+    .mission-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 500px) {
+      .mission-grid { grid-template-columns: 1fr; }
+      .prize-banner { flex-direction: column; align-items: center; }
+      .prize-card { max-width: 100%; width: 100%; }
+    }
+
+    .mission-card {
+      background: rgba(6,182,212,0.06);
+      border: 1px solid rgba(6,182,212,0.2);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .mission-emoji { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .mission-name { font-size: 0.82rem; font-weight: 700; color: var(--accent2); margin-bottom: 0.3rem; }
+    .mission-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+
+    /* ─── 꼴찌 벌칙 ─── */
+    .penalty-box {
+      background: rgba(239,68,68,0.08);
+      border: 1.5px solid rgba(239,68,68,0.4);
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .penalty-skull { font-size: 2.8rem; }
+
+    .penalty-text .penalty-title {
+      font-weight: 900;
+      font-size: 1rem;
+      color: var(--danger);
+      margin-bottom: 0.4rem;
+    }
+
+    .penalty-text p {
+      font-size: 0.87rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ─── 푸터 ─── */
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 1rem;
+      line-height: 1.6;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent);
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="page-title">🎵 MUSIC QUIZ</div>
+    <div class="page-subtitle">🍺 술게임 에디션 — 오늘 누가 왕이 되는가</div>
+
+    <!-- 상금 -->
+    <div class="prize-banner">
+      <div class="prize-card first">
+        <div class="prize-rank">🥇 1ST PLACE</div>
+        <div class="prize-medal">👑</div>
+        <div class="prize-amount">30,000원</div>
+        <div class="prize-label">오늘의 뮤직 천재</div>
+      </div>
+      <div class="prize-card second">
+        <div class="prize-rank">🥈 2ND PLACE</div>
+        <div class="prize-medal">🎖️</div>
+        <div class="prize-amount">20,000원</div>
+        <div class="prize-label">아깝지만 잘했어</div>
+      </div>
+    </div>
+
+    <!-- 게임 진행 방식 -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">🎮</span>
+        <span class="section-title">GAME FLOW</span>
+      </div>
+      <div class="flow-list">
+        <div class="flow-item">
+          <span class="flow-num">01</span>
+          <span class="flow-text">진행자가 노래를 틀면 <em>제목 + 아티스트</em> 를 먼저 외치는 사람이 정답!</span>
+        </div>
+        <div class="flow-item">
+          <span class="flow-num">02</span>
+          <span class="flow-text">타이머 종료 전까지 답 못 맞히면 <em>힌트 공개</em> → 아티스트 공개 순으로 진행</span>
+        </div>
+        <div class="flow-item">
+          <span class="flow-num">03</span>
+          <span class="flow-text">모든 문제 종료 후 <em>누적 점수 1·2위</em>가 상금 획득</span>
+        </div>
+        <div class="flow-item">
+          <span class="flow-num">04</span>
+          <span class="flow-text">동점이면 <em>갑자기 퀴즈</em> (1문제 단판 승부) 로 순위 결정</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 점수 체계 -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">📊</span>
+        <span class="section-title">SCORE SYSTEM</span>
+      </div>
+      <table class="score-table">
+        <thead>
+          <tr>
+            <th>상황</th>
+            <th>점수</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🎵 힌트 없이 정답 (인트로만 듣고)</td>
+            <td><span class="score-pts">+3점</span></td>
+          </tr>
+          <tr>
+            <td>💡 힌트 공개 후 정답</td>
+            <td><span class="score-pts">+2점</span></td>
+          </tr>
+          <tr>
+            <td>🎤 아티스트 공개 후 정답</td>
+            <td><span class="score-pts">+1점</span></td>
+          </tr>
+          <tr>
+            <td>❌ 오답 (틀린 말 외쳤을 때)</td>
+            <td><span class="score-pts" style="color:var(--danger)">−1점</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 술게임 룰 -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">🍺</span>
+        <span class="section-title">DRINK RULES</span>
+      </div>
+      <div class="drink-grid">
+
+        <div class="drink-rule">
+          <span class="drink-icon">❌</span>
+          <div class="drink-body">
+            <div class="drink-condition">아무도 못 맞혔을 때</div>
+            <div class="drink-action">전원 1샷 — 다 같이 마셔야지</div>
+          </div>
+          <span class="drink-badge">1샷</span>
+        </div>
+
+        <div class="drink-rule">
+          <span class="drink-icon">🙅</span>
+          <div class="drink-body">
+            <div class="drink-condition">오답을 외쳤을 때</div>
+            <div class="drink-action">본인 2샷 + 점수 -1점</div>
+          </div>
+          <span class="drink-badge">2샷</span>
+        </div>
+
+        <div class="drink-rule">
+          <span class="drink-icon">⏰</span>
+          <div class="drink-body">
+            <div class="drink-condition">타이머 종료될 때까지 침묵</div>
+            <div class="drink-action">꼴찌로 앉아있던 사람 1샷</div>
+          </div>
+          <span class="drink-badge">1샷</span>
+        </div>
+
+        <div class="drink-rule">
+          <span class="drink-icon">🎤</span>
+          <div class="drink-body">
+            <div class="drink-condition">아티스트만 맞히고 제목은 모를 때</div>
+            <div class="drink-action">반샷 (점수는 없음)</div>
+          </div>
+          <span class="drink-badge">반샷</span>
+        </div>
+
+        <div class="drink-rule danger">
+          <span class="drink-icon">🔥</span>
+          <div class="drink-body">
+            <div class="drink-condition">연속 3문제 연속 틀릴 때</div>
+            <div class="drink-action">3샷 원샷 — "음알못" 인증</div>
+          </div>
+          <span class="drink-badge">3샷</span>
+        </div>
+
+        <div class="drink-rule danger">
+          <span class="drink-icon">👑</span>
+          <div class="drink-body">
+            <div class="drink-condition">1위가 지목하면</div>
+            <div class="drink-action">지목 당한 사람 2샷 (1라운드 1회 한정)</div>
+          </div>
+          <span class="drink-badge">2샷</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 특수 미션 -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">⚡</span>
+        <span class="section-title">SPECIAL MISSION</span>
+      </div>
+      <div class="mission-grid">
+        <div class="mission-card">
+          <div class="mission-emoji">🎸</div>
+          <div class="mission-name">흥 미션</div>
+          <div class="mission-desc">정답 맞힌 후 30초 내로 가사 1절 부르면 +1보너스 점수</div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-emoji">🕵️</div>
+          <div class="mission-name">도전 찬스</div>
+          <div class="mission-desc">문제당 1회 — 틀리면 2샷, 맞히면 상대방 2샷 먹이기</div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-emoji">🎯</div>
+          <div class="mission-name">퍼펙트 라운드</div>
+          <div class="mission-desc">한 사람이 3연속 정답 시 원하는 사람에게 3샷 부과 가능</div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-emoji">🔄</div>
+          <div class="mission-name">반전 카드</div>
+          <div class="mission-desc">꼴찌는 마지막 문제에서 점수 2배 — 역전 가능!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 꼴찌 벌칙 -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">💀</span>
+        <span class="section-title">LAST PLACE PENALTY</span>
+      </div>
+      <div class="penalty-box">
+        <div class="penalty-skull">💀</div>
+        <div class="penalty-text">
+          <div class="penalty-title">꼴찌의 수난</div>
+          <p>최하위는 1등한테 상금 봉투 직접 전달 + 전원 앞에서 "나는 음알못입니다" 외치기</p>
+          <p style="margin-top:0.4rem">공동 꼴찌면 가위바위보로 결정 (진 사람이 더 마심)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="footer-note">
+      🍺 적당히 마시고 즐겁게 즐기세요 — 오늘 왕관은 누가 쓸까요?<br>
+      진행자 화면: <strong style="color:var(--accent2)">localhost:3000/host</strong>
+    </div>
+
+  </div>
+
+</body>
+</html>

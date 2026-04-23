@@ -129,6 +129,22 @@
         </div>
       </div>
 
+      <!-- 점수판 -->
+      <div class="score-section">
+        <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span>🏆 점수판</span>
+          <div style="display:flex;gap:0.4rem">
+            <a href="/scoreboard" target="_blank" style="font-size:0.75rem;color:var(--accent2);text-decoration:none;padding:0.2rem 0.6rem;border:1px solid var(--accent2);border-radius:6px">📺 화면 열기</a>
+            <button class="score-reset-btn" onclick="resetScores()">초기화</button>
+          </div>
+        </div>
+        <div class="score-add-row">
+          <input type="text" id="score-name-input" placeholder="참가자 이름" onkeydown="if(event.key==='Enter')addPlayer()"/>
+          <button class="score-add-btn" onclick="addPlayer()">+ 추가</button>
+        </div>
+        <ul id="score-list" class="score-list"></ul>
+      </div>
+
       <!-- 가사 -->
       <div class="lyrics-preview">
         <div class="section-label">📝 가사 (진행자용)</div>

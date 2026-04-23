@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🏆 점수판</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --surface: #12122a;
+      --card: #1a1a35;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --gold: #fbbf24;
+      --silver: #94a3b8;
+      --bronze: #cd7c2f;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── 헤더 ─── */
+    .sb-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4rem 2rem 0.8rem;
+      gap: 1rem;
+    }
+
+    .sb-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 4px;
+    }
+
+    /* ─── 빈 상태 ─── */
+    .sb-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      opacity: 0.4;
+    }
+
+    .sb-empty-icon { font-size: 4rem; }
+    .sb-empty-text { font-size: 1rem; color: var(--muted); letter-spacing: 2px; }
+
+    /* ─── 메인 점수 리스트 ─── */
+    .sb-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0.5rem 3vw 2rem;
+      gap: clamp(0.5rem, 1.5vh, 1rem);
+      overflow: hidden;
+    }
+
+    .sb-row {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      padding: clamp(0.7rem, 1.8vh, 1.2rem) clamp(1rem, 2.5vw, 2rem);
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid rgba(124,58,237,0.2);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    }
+
+    .sb-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent);
+      border-radius: 4px 0 0 4px;
+    }
+
+    .sb-row.rank-1 {
+      background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.04));
+      border-color: rgba(251,191,36,0.4);
+      box-shadow: 0 0 30px rgba(251,191,36,0.15);
+    }
+    .sb-row.rank-1::before { background: var(--gold); width: 5px; }
+
+    .sb-row.rank-2 {
+      background: linear-gradient(135deg, rgba(148,163,184,0.1), rgba(148,163,184,0.03));
+      border-color: rgba(148,163,184,0.3);
+    }
+    .sb-row.rank-2::before { background: var(--silver); }
+
+    .sb-row.rank-3 {
+      background: linear-gradient(135deg, rgba(205,124,47,0.1), rgba(205,124,47,0.03));
+      border-color: rgba(205,124,47,0.3);
+    }
+    .sb-row.rank-3::before { background: var(--bronze); }
+
+    /* ─── 랭크 배지 ─── */
+    .sb-rank {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      min-width: clamp(40px, 6vw, 60px);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ─── 이름 ─── */
+    .sb-name {
+      flex: 1;
+      font-size: clamp(1.1rem, 3vw, 1.8rem);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sb-row.rank-1 .sb-name { color: var(--gold); }
+    .sb-row.rank-2 .sb-name { color: var(--silver); }
+    .sb-row.rank-3 .sb-name { color: var(--bronze); }
+
+    /* ─── 점수 바 ─── */
+    .sb-bar-wrap {
+      flex: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .sb-bar-bg {
+      flex: 1;
+      height: clamp(8px, 1.5vh, 14px);
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .sb-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .sb-row.rank-1 .sb-bar-fill { background: linear-gradient(90deg, var(--gold), #f59e0b); }
+    .sb-row.rank-2 .sb-bar-fill { background: linear-gradient(90deg, var(--silver), #cbd5e1); }
+    .sb-row.rank-3 .sb-bar-fill { background: linear-gradient(90deg, var(--bronze), #d97706); }
+
+    /* ─── 점수 숫자 ─── */
+    .sb-score {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      min-width: clamp(50px, 7vw, 80px);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .sb-row.rank-1 .sb-score { color: var(--gold); text-shadow: 0 0 20px rgba(251,191,36,0.5); }
+    .sb-row.rank-2 .sb-score { color: var(--silver); }
+    .sb-row.rank-3 .sb-score { color: var(--bronze); }
+
+    /* ─── 점수 변화 애니메이션 ─── */
+    .score-delta {
+      position: absolute;
+      right: clamp(1rem,2.5vw,2rem);
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem;
+      font-weight: 900;
+      pointer-events: none;
+      animation: floatUp 1.2s ease forwards;
+    }
+    .score-delta.pos { color: var(--success); }
+    .score-delta.neg { color: var(--danger); }
+
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-50px); }
+    }
+
+    /* ─── 상금 배너 ─── */
+    .prize-strip {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.6rem 2rem 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .prize-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(251,191,36,0.1);
+      border: 1px solid rgba(251,191,36,0.3);
+      border-radius: 20px;
+      padding: 0.35rem 1rem;
+      font-size: 0.82rem;
+      color: var(--gold);
+    }
+
+    .prize-chip.second {
+      background: rgba(148,163,184,0.08);
+      border-color: rgba(148,163,184,0.2);
+      color: var(--silver);
+    }
+
+    @media (max-width: 600px) {
+      .sb-bar-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sb-header">
+    <div class="sb-title">🏆 SCOREBOARD</div>
+  </div>
+
+  <div id="sb-empty" class="sb-empty">
+    <div class="sb-empty-icon">🎵</div>
+    <div class="sb-empty-text">참가자를 추가하면 여기에 나타납니다</div>
+  </div>
+
+  <div id="sb-body" class="sb-body" style="display:none"></div>
+
+  <div class="prize-strip">
+    <div class="prize-chip">👑 1위 30,000원</div>
+    <div class="prize-chip second">🥈 2위 20,000원</div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let prevScores = [];
+
+    const RANK_ICONS = ['👑','🥈','🥉','4','5','6','7','8','9','10'];
+
+    function render(scores) {
+      const empty = document.getElementById('sb-empty');
+      const body  = document.getElementById('sb-body');
+
+      if (!scores || scores.length === 0) {
+        empty.style.display = 'flex';
+        body.style.display  = 'none';
+        prevScores = [];
+        return;
+      }
+
+      empty.style.display = 'none';
+      body.style.display  = 'flex';
+
+      const maxScore = Math.max(...scores.map(p => p.score), 1);
+      const sorted   = [...scores].sort((a, b) => b.score - a.score);
+
+      body.innerHTML = '';
+      sorted.forEach((p, rank) => {
+        const prev    = prevScores.find(x => x.name === p.name);
+        const delta   = prev != null ? p.score - prev.score : 0;
+        const barPct  = Math.max(0, (p.score / maxScore) * 100);
+        const rankCls = rank === 0 ? 'rank-1' : rank === 1 ? 'rank-2' : rank === 2 ? 'rank-3' : '';
+        const icon    = rank < 3 ? ['👑','🥈','🥉'][rank] : `${rank+1}`;
+
+        const row = document.createElement('div');
+        row.className = `sb-row ${rankCls}`;
+        row.innerHTML = `
+          <div class="sb-rank">${icon}</div>
+          <div class="sb-name">${p.name}</div>
+          <div class="sb-bar-wrap">
+            <div class="sb-bar-bg">
+              <div class="sb-bar-fill" style="width:${barPct}%"></div>
+            </div>
+          </div>
+          <div class="sb-score">${p.score}</div>`;
+
+        if (delta !== 0) {
+          const d = document.createElement('div');
+          d.className = `score-delta ${delta > 0 ? 'pos' : 'neg'}`;
+          d.textContent = delta > 0 ? `+${delta}` : `${delta}`;
+          row.appendChild(d);
+
+          if (delta > 0 && rank === 0) {
+            confetti({ particleCount: 40, spread: 60, origin: { y: 0.4 }, colors: ['#fbbf24','#f59e0b','#ffffff'] });
+          }
+        }
+
+        body.appendChild(row);
+      });
+
+      prevScores = scores.map(p => ({ ...p }));
+    }
+
+    socket.on('state:sync',    (d) => render(d.scores || []));
+    socket.on('player:scores', (d) => render(d.scores || []));
+  </script>
+</body>
+</html>

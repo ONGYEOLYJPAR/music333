@@ -19,7 +19,9 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/music', express.static('music'));
 
-app.get('/host', (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
+app.get('/host',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
+app.get('/rules',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'rules.html')));
+app.get('/scoreboard',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'scoreboard.html')));
 
 // ─── iTunes Search API (무료, 인증 없음) ───
 app.get('/spotify/search', async (req, res) => {
@@ -66,7 +68,7 @@ app.post('/api/upload', upload.single('mp3'), (req, res) => {
 });
 
 // ─── Socket.io ───
-let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0, mode: 'ai', timerSeconds: 0, timerRunning: false, youtubeVideoId: '' };
+let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0, mode: 'ai', timerSeconds: 0, timerRunning: false, youtubeVideoId: '', scores: [] };
 
 io.on('connection', (socket) => {
   socket.emit('state:sync', { ...gameState, liveHint: gameState.liveHint || '' });
@@ -83,6 +85,7 @@ io.on('connection', (socket) => {
   socket.on('host:mode',   (d) => { gameState.mode = d.mode; io.emit('player:mode', d); });
   socket.on('host:timer',  (d) => { Object.assign(gameState, d); io.emit('player:timer', d); });
   socket.on('host:hint',   (d) => { gameState.liveHint = d.text; io.emit('player:hint', d); });
+  socket.on('host:scores', (d) => { gameState.scores = d.scores; io.emit('player:scores', d); });
   socket.on('host:youtube',   (d) => { gameState.youtubeVideoId = d.videoId; io.emit('player:youtube', d); });
   socket.on('host:yt-play',  (d) => { io.emit('player:yt-play',  d); });
   socket.on('host:yt-pause', (d) => { io.emit('player:yt-pause', d); });

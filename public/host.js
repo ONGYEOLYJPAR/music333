@@ -486,6 +486,73 @@ async function deleteSong(index) {
   renderManageList();
 }
 
+// ─── 점수판 ───
+let scores = [];
+
+function emitScores() {
+  socket.emit('host:scores', { scores });
+}
+
+function addPlayer() {
+  const input = document.getElementById('score-name-input');
+  const name = input.value.trim();
+  if (!name) return;
+  if (scores.find(p => p.name === name)) { input.value = ''; return; }
+  scores.push({ name, score: 0 });
+  input.value = '';
+  renderScores();
+  emitScores();
+}
+
+function adjustScore(index, delta) {
+  scores[index].score += delta;
+  renderScores();
+  emitScores();
+}
+
+function removePlayer(index) {
+  scores.splice(index, 1);
+  renderScores();
+  emitScores();
+}
+
+function resetScores() {
+  if (!confirm('점수를 모두 초기화할까요?')) return;
+  scores = [];
+  renderScores();
+  emitScores();
+}
+
+function renderScores() {
+  const sorted = [...scores].map((p, i) => ({ ...p, origIdx: i }))
+    .sort((a, b) => b.score - a.score);
+  const ul = document.getElementById('score-list');
+  ul.innerHTML = '';
+  sorted.forEach((p, rank) => {
+    const li = document.createElement('li');
+    li.className = 'score-item';
+    const rankClass = rank === 0 ? 'r1' : rank === 1 ? 'r2' : rank === 2 ? 'r3' : '';
+    const rankLabel = rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `${rank+1}`;
+    li.innerHTML = `
+      <span class="score-item-rank ${rankClass}">${rankLabel}</span>
+      <span class="score-item-name">${p.name}</span>
+      <span class="score-item-pts">${p.score}</span>
+      <div class="score-item-btns">
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},3)" title="+3">+3</button>
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},2)" title="+2">+2</button>
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},1)" title="+1">+1</button>
+        <button class="score-btn minus" onclick="adjustScore(${p.origIdx},-1)" title="-1">-1</button>
+        <button class="score-btn del" onclick="removePlayer(${p.origIdx})" title="삭제">✕</button>
+      </div>`;
+    ul.appendChild(li);
+  });
+}
+
+// 서버에서 scores 동기화
+socket.on('state:sync', (d) => {
+  if (d.scores) { scores = d.scores; renderScores(); }
+});
+
 // ─── 키보드 단축키 ───
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
