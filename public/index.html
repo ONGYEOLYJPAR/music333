@@ -20,6 +20,12 @@
   <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999"></canvas>
   <a href="/host" target="_blank" style="position:fixed;bottom:1rem;right:1rem;z-index:100;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:0.4rem 0.9rem;border-radius:20px;font-size:0.75rem;text-decoration:none;transition:all 0.2s" onmouseover="this.style.opacity='1';this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">🎮 HOST</a>
 
+  <!-- 사이드 점수판 -->
+  <div id="side-scoreboard" class="side-scoreboard hidden">
+    <div class="ssb-header">🏆 SCORE</div>
+    <ul id="ssb-list" class="ssb-list"></ul>
+  </div>
+
   <!-- 상단 타이머 -->
   <div class="audience-timer hidden" id="audience-timer">
     <span id="timer-num">30</span>

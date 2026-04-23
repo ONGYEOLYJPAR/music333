@@ -278,6 +278,117 @@
   color: var(--muted);
 }
 
+/* ─── 사이드 점수판 ─── */
+.side-scoreboard {
+  position: fixed;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  background: rgba(18,18,42,0.85);
+  border: 1px solid rgba(124,58,237,0.35);
+  border-radius: 16px;
+  padding: 1rem 0.8rem;
+  backdrop-filter: blur(12px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: fadeInLeft 0.4s ease;
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateY(-50%) translateX(-20px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+.ssb-header {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(251,191,36,0.2);
+}
+
+.ssb-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ssb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.03);
+  transition: background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.ssb-item.rank-1 {
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.25);
+}
+.ssb-item.rank-2 { background: rgba(148,163,184,0.07); }
+.ssb-item.rank-3 { background: rgba(205,124,47,0.07); }
+
+.ssb-medal {
+  font-size: 0.9rem;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ssb-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.ssb-item.rank-1 .ssb-name { color: var(--gold); }
+.ssb-item.rank-2 .ssb-name { color: var(--silver, #94a3b8); }
+
+.ssb-pts {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ssb-item.rank-1 .ssb-pts { color: var(--gold); }
+.ssb-item.rank-2 .ssb-pts { color: #94a3b8; }
+
+.ssb-delta {
+  position: absolute;
+  right: 0.4rem;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  pointer-events: none;
+  animation: floatUp 1.2s ease forwards;
+}
+.ssb-delta.pos { color: var(--success); }
+.ssb-delta.neg { color: var(--danger); }
+
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* 화면이 좁으면 숨김 */
+@media (max-width: 1100px) {
+  .side-scoreboard { display: none !important; }
+}
+
 /* ─── 유튜브 원곡 영상 ─── */
 .aud-youtube-wrap {
   width: 100%;

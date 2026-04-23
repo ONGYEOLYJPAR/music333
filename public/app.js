@@ -200,4 +200,36 @@ function fireConfetti() {
 
 // ─── state:sync에서 songIndex 저장 ───
 socket.on('player:load', (d) => { window._currentSongIndex = d.songIndex; });
-socket.on('state:sync',  (d) => { window._currentSongIndex = d.songIndex; });
+socket.on('state:sync',  (d) => { window._currentSongIndex = d.songIndex; if (d.scores) renderSideScoreboard(d.scores); });
+
+// ─── 사이드 점수판 ───
+let _ssbPrev = [];
+
+function renderSideScoreboard(scores) {
+  const board = document.getElementById('side-scoreboard');
+  const list  = document.getElementById('ssb-list');
+  if (!scores || scores.length === 0) { board.classList.add('hidden'); _ssbPrev = []; return; }
+  board.classList.remove('hidden');
+
+  const sorted = [...scores].sort((a, b) => b.score - a.score);
+  list.innerHTML = '';
+  sorted.forEach((p, rank) => {
+    const prev  = _ssbPrev.find(x => x.name === p.name);
+    const delta = prev != null ? p.score - prev.score : 0;
+    const medal = rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `${rank+1}.`;
+    const cls   = rank < 3 ? `rank-${rank+1}` : '';
+    const li = document.createElement('li');
+    li.className = `ssb-item ${cls}`;
+    li.innerHTML = `<span class="ssb-medal">${medal}</span><span class="ssb-name">${p.name}</span><span class="ssb-pts">${p.score}</span>`;
+    if (delta !== 0) {
+      const d = document.createElement('span');
+      d.className = `ssb-delta ${delta > 0 ? 'pos' : 'neg'}`;
+      d.textContent = delta > 0 ? `+${delta}` : `${delta}`;
+      li.appendChild(d);
+    }
+    list.appendChild(li);
+  });
+  _ssbPrev = scores.map(p => ({ ...p }));
+}
+
+socket.on('player:scores', (d) => renderSideScoreboard(d.scores || []));
