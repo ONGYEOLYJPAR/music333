@@ -534,15 +534,17 @@ function renderScores() {
     const rankClass = rank === 0 ? 'r1' : rank === 1 ? 'r2' : rank === 2 ? 'r3' : '';
     const rankLabel = rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `${rank+1}`;
     li.innerHTML = `
-      <span class="score-item-rank ${rankClass}">${rankLabel}</span>
-      <span class="score-item-name">${p.name}</span>
-      <span class="score-item-pts">${p.score}</span>
+      <div class="score-item-top">
+        <span class="score-item-rank">${rankLabel}</span>
+        <span class="score-item-name">${p.name}</span>
+        <span class="score-item-pts">${p.score}</span>
+      </div>
       <div class="score-item-btns">
-        <button class="score-btn" onclick="adjustScore(${p.origIdx},3)" title="+3">+3</button>
-        <button class="score-btn" onclick="adjustScore(${p.origIdx},2)" title="+2">+2</button>
-        <button class="score-btn" onclick="adjustScore(${p.origIdx},1)" title="+1">+1</button>
-        <button class="score-btn minus" onclick="adjustScore(${p.origIdx},-1)" title="-1">-1</button>
-        <button class="score-btn del" onclick="removePlayer(${p.origIdx})" title="삭제">✕</button>
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},3)">+3</button>
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},2)">+2</button>
+        <button class="score-btn" onclick="adjustScore(${p.origIdx},1)">+1</button>
+        <button class="score-btn minus" onclick="adjustScore(${p.origIdx},-1)">-1</button>
+        <button class="score-btn del" onclick="removePlayer(${p.origIdx})">✕</button>
       </div>`;
     ul.appendChild(li);
   });
