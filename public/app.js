@@ -32,7 +32,7 @@ socket.on('state:sync', async (state) => {
 });
 
 // ─── 진행자 이벤트 수신 ───
-socket.on('player:load',  async (d) => { await loadSongs(); applyLoad(d); });
+socket.on('player:load',  applyLoad);
 socket.on('player:play',  applyPlay);
 socket.on('player:pause', applyPause);
 socket.on('player:seek',  (d) => { audio.currentTime = d.time; });
@@ -67,8 +67,9 @@ function applyYoutube(d) {
 }
 
 function applyLoad(d) {
-  const s = songs[d.songIndex];
+  const s = d.song || songs[d.songIndex];
   if (!s) return;
+  if (d.song) songs[d.songIndex] = d.song; // 로컬 캐시 업데이트
   document.getElementById('aud-round').textContent = `Q ${d.songIndex + 1}`;
   const src = currentMode === 'ai'
     ? `/music/${encodeURIComponent(s.filename)}`

@@ -72,7 +72,12 @@ let gameState = { songIndex: 0, isPlaying: false, currentTime: 0, revealStep: 0,
 
 io.on('connection', (socket) => {
   socket.emit('state:sync', { ...gameState, liveHint: gameState.liveHint || '' });
-  socket.on('host:load',   (d) => { gameState = { ...gameState, ...d, revealStep: 0 }; io.emit('player:load', d); });
+  socket.on('host:load',   (d) => {
+    gameState = { ...gameState, ...d, revealStep: 0 };
+    const songs = readSongs();
+    const song  = songs[d.songIndex] || {};
+    io.emit('player:load', { ...d, song });
+  });
   socket.on('host:play',   (d) => { gameState.isPlaying = true;  gameState.currentTime = d.currentTime; io.emit('player:play',  d); });
   socket.on('host:pause',  (d) => { gameState.isPlaying = false; gameState.currentTime = d.currentTime; io.emit('player:pause', d); });
   socket.on('host:seek',   (d) => { gameState.currentTime = d.time; io.emit('player:seek', d); });
