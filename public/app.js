@@ -32,7 +32,7 @@ socket.on('state:sync', async (state) => {
 });
 
 // ─── 진행자 이벤트 수신 ───
-socket.on('player:load',  applyLoad);
+socket.on('player:load',  async (d) => { await loadSongs(); applyLoad(d); });
 socket.on('player:play',  applyPlay);
 socket.on('player:pause', applyPause);
 socket.on('player:seek',  (d) => { audio.currentTime = d.time; });
