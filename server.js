@@ -17,7 +17,7 @@ const REDIRECT_URI          = process.env.REDIRECT_URI || `http://localhost:${PO
 
 app.use(express.json());
 app.use(express.static('public'));
-app.use('/music', express.static('music'));
+app.use('/music', express.static('music', { maxAge: '7d' }));
 
 app.get('/host',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
 app.get('/rules',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'rules.html')));

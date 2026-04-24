@@ -69,19 +69,25 @@ function applyYoutube(d) {
 function applyLoad(d) {
   const s = d.song || songs[d.songIndex];
   if (!s) return;
-  if (d.song) songs[d.songIndex] = d.song; // 로컬 캐시 업데이트
+  if (d.song) songs[d.songIndex] = d.song;
   document.getElementById('aud-round').textContent = `Q ${d.songIndex + 1}`;
   const src = currentMode === 'ai'
     ? `/music/${encodeURIComponent(s.filename)}`
     : (s.originalFilename ? `/music/${encodeURIComponent(s.originalFilename)}` : `/music/${encodeURIComponent(s.filename)}`);
-  audio.src = src;
-  audio.load();
+  // 이미 같은 파일이면 다시 로드하지 않음 (불필요한 재다운로드 방지)
+  if (audio.src !== location.origin + src) {
+    audio.src = src;
+    audio.preload = 'auto';
+    audio.load();
+  }
   applyReveal({ step: 0 });
 }
 
 function applyPlay(d) {
   audio.currentTime = d.currentTime || 0;
-  audio.play().catch(() => {});
+  // 충분히 버퍼링됐으면 바로 재생, 아니면 버퍼링 후 재생
+  const playPromise = audio.play();
+  if (playPromise) playPromise.catch(() => {});
 }
 
 function applyPause(d) {
