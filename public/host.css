@@ -148,20 +148,23 @@
 
 #progress-bar {
   flex: 1;
-  height: 5px;
+  height: 10px;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--surface);
-  border-radius: 3px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 5px;
   outline: none;
   cursor: pointer;
+  border: 1px solid rgba(124,58,237,0.3);
 }
 #progress-bar::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 14px; height: 14px;
+  width: 18px; height: 18px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: var(--glow);
+  border: 2px solid white;
+  cursor: grab;
 }
 
 /* ─── 원곡 로컬 플레이어 ─── */

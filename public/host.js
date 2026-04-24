@@ -247,7 +247,7 @@ audioAI.addEventListener('timeupdate', () => {
   if (!audioAI.duration) return;
   const pct = (audioAI.currentTime / audioAI.duration) * 100;
   progressBar.value = pct;
-  progressBar.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--card) ${pct}%)`;
+  progressBar.style.background = `linear-gradient(to right, #7c3aed ${pct}%, rgba(255,255,255,0.15) ${pct}%)`;
   timeCurrent.textContent = fmt(audioAI.currentTime);
 });
 audioAI.addEventListener('loadedmetadata', () => { timeTotal.textContent = fmt(audioAI.duration); });
